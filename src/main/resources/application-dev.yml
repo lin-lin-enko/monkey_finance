@@ -1,0 +1,20 @@
+# profile for local development
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/monkey_finance_dev
+    username: monkey_finance_app
+    password: ${DB_APP_PASSWORD}
+
+  liquibase:
+    enabled: true
+    user: monkey_migrate
+    password: ${DB_MIGRATE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate

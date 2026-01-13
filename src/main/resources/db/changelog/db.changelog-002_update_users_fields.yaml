@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260112-002
+      author: lin
+      changes:
+        - modifyDataType:
+            tableName: users
+            columnName: username
+            newDataType: varchar(20)
+        - modifyDataType:
+            tableName: users
+            columnName: email
+            newDataType: varchar(60)
+        - modifyDataType:
+            tableName: users
+            columnName: password_hash
+            newDataType: varchar(100)
+        - modifyDataType:
+            tableName: users
+            columnName: phone_number
+            newDataType: varchar(20)

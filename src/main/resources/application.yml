@@ -1,0 +1,19 @@
+# basic settings for all profiles
+
+spring:
+  application:
+    name: monkey
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: monkey_finance_app_dev
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: monkey_finance_app_dev
+    liquibase-schema: monkey_finance_app_dev

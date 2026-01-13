@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260112-001
+      author: lin
+      changes:
+        - tagDatabase:
+            tag: baseline
