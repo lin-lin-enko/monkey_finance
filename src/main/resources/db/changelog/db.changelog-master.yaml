@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog-001_baseline_db.yaml
   - include:
       file: db/changelog/db.changelog-002_update_users_fields.yaml
+  - include:
+      file: db/changelog/db.changelog-003_alter_users_email_to_citext.yaml
