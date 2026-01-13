@@ -53,6 +53,14 @@ public class UserRegistrationDto {
         this.password = password;
     }
 
+    public String getPasswordConfirmation() {
+        return passwordConfirmation;
+    }
+
+    public void setPasswordConfirmation(String passwordConfirmation) {
+        this.passwordConfirmation = passwordConfirmation;
+    }
+
     public LocalDate getBirthDate() {
         return birthDate;
     }
