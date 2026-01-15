@@ -2,7 +2,6 @@ package com.lin.monkey.model;
 
 import jakarta.persistence.*;
 
-import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,7 +10,7 @@ import io.hypersistence.utils.hibernate.type.basic.PostgreSQLCITextType;
 import org.hibernate.annotations.Type;
 
 @Entity //means that it's a class that represents a table in the db
-@Table(name = "users") //table to which i connect
+@Table(name = "users") //table to which I connect
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,6 +23,7 @@ public class User {
     @Column(nullable = false, unique = true, columnDefinition = "citext", length = 60)
     private String email;
 
+    @SuppressWarnings("DefaultAnnotationParam")
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
