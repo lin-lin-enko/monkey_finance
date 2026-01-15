@@ -4,6 +4,10 @@ spring:
   config:
     activate:
       on-profile: dev
+  security:
+    user:
+      name: devuser
+      password: devuser123
 
   datasource:
     url: jdbc:postgresql://localhost:5432/monkey_finance_dev
