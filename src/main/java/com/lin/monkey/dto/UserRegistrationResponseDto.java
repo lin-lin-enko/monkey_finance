@@ -4,23 +4,23 @@ import com.lin.monkey.model.User;
 
 import java.time.LocalDate;
 
-public class UserResponseDto {
+public class UserRegistrationResponseDto {
     private final String username;
     private final String email;
     private final LocalDate birthDate;
     private final String phoneNumber;
 
-    private UserResponseDto(String username, String email, LocalDate birthDate, String phoneNumber) {
+    private UserRegistrationResponseDto(String username, String email, LocalDate birthDate, String phoneNumber) {
         this.username = username;
         this.email = email;
         this.birthDate = birthDate;
         this.phoneNumber = phoneNumber;
     }
 
-    public static UserResponseDto fromUser(User user) {
+    public static UserRegistrationResponseDto fromUser(User user) {
         if (user == null) return null;
 
-        return new UserResponseDto(user.getUsername(), user.getEmail(), user.getBirthDate(), user.getPhoneNumber());
+        return new UserRegistrationResponseDto(user.getUsername(), user.getEmail(), user.getBirthDate(), user.getPhoneNumber());
     }
 
     public String getUsername() {

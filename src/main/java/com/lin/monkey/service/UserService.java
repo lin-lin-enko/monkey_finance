@@ -1,7 +1,7 @@
 package com.lin.monkey.service;
 
-import com.lin.monkey.dto.UserRegistrationDto;
-import com.lin.monkey.dto.UserResponseDto;
+import com.lin.monkey.dto.UserRegistrationRequestDto;
+import com.lin.monkey.dto.UserRegistrationResponseDto;
 import com.lin.monkey.model.User;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,12 +29,12 @@ public class UserService {
     }
 
     /*
-     * Registers user, returns UserResponseDto
-     * Accepts UserRegistrationDto from controller
+     * Registers user, returns UserRegistrationResponseDto
+     * Accepts UserRegistrationRequestDto from controller
      * Gives data to repository, and it gives it to the db
      * Returns safe dto as an answer
      * */
-    public UserResponseDto register(UserRegistrationDto dto) {
+    public UserRegistrationResponseDto register(UserRegistrationRequestDto dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Email \"" + dto.getEmail() + "\" is already in use");
         }
@@ -62,7 +62,7 @@ public class UserService {
 
         // Returns saved object as an answer
         // and turns it into safe dto obj unsing fromUser()
-        return UserResponseDto.fromUser(savedUser);
+        return UserRegistrationResponseDto.fromUser(savedUser);
     }
 
     public Optional<User> findByEmail(String email) {

@@ -1,0 +1,56 @@
+package com.lin.monkey.security;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+// Claims is what gets put into the token (e.g. username, roles etc.)
+import io.jsonwebtoken.Claims;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Date;
+
+/* Means an object of this class will be created and put into container
+ * So JwtUtil could be injected into any controller/service through
+ * a constructor
+ */
+
+@Component
+public class JwtUtil {
+    // Random key 512bit key is generated
+    private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private static final long EXPIRATION_TIME = 86400000;
+
+    public String generateToken(String username) {
+        // a new jwt token is generated using a username
+        return Jwts.builder()
+                .setSubject(username) // putting username into the token
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(SECRET_KEY) // signing token with a random secret key
+                .compact(); // assembling everything into a single string
+    }
+
+    private Claims extractClaims(String token) {
+        // parsing a token
+        return Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY) // using the signing key to validate token sign
+                .build()// building a parser
+                .parseClaimsJws(token) // turning token into JWS
+                .getBody(); // getting Claims obj from parsing result
+    }
+
+    public String extractUsername(String token) {
+        return extractClaims(token).getSubject();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            extractClaims(token);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Invalid JWT: " + e.getMessage());
+            return false;
+        }
+    }
+}
