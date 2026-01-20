@@ -2,18 +2,15 @@ package com.lin.monkey.controller;
 
 import com.lin.monkey.dto.UserLoginRequestDto;
 import com.lin.monkey.dto.UserLoginResponseDto;
-import com.lin.monkey.dto.UserRegistrationRequestDto;
-import com.lin.monkey.dto.UserRegistrationResponseDto;
+import com.lin.monkey.dto.UserRequestDto;
+import com.lin.monkey.dto.UserResponseDto;
 import com.lin.monkey.model.User;
 import com.lin.monkey.security.JwtUtil;
 import com.lin.monkey.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
@@ -40,19 +37,19 @@ public class AuthController {
      * to the /api/auth/register
      */
     @PostMapping("/register")
-    /* ResponseEntity<UserRegistrationRequestDto> to make a safe response obj
+    /* ResponseEntity<UserRequestDto> to make a safe response obj
      * ResponseEntity is used to form an HTTP response
      */
-    public ResponseEntity<UserRegistrationResponseDto> register(
+    public ResponseEntity<UserResponseDto> register(
             /* Takes JSON from request body, validates it through
-             * UserRegistrationRequestDto and turns into dto obj
+             * UserRequestDto and turns into dto obj
              */
-            @Valid @RequestBody UserRegistrationRequestDto registrationDto
+            @Valid @RequestBody UserRequestDto registrationDto
     ) {
         /* Calling user service and passing registration obj (dto) to it
          * Saving calling result into a safe response obj (dto)
          */
-        UserRegistrationResponseDto responseDto = userService.register(registrationDto);
+        UserResponseDto responseDto = userService.register(registrationDto);
 
         // Returns 201 response + Location header + body with response dto
         return ResponseEntity.created(URI.create("/api/users/" + responseDto.getUsername())).body(responseDto);
@@ -62,7 +59,6 @@ public class AuthController {
     public ResponseEntity<UserLoginResponseDto> login(
             @Valid @RequestBody UserLoginRequestDto loginDto
     ) {
-        System.out.println("hi");
         User user = userService.findByEmail(loginDto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("No user with such email"));
 
@@ -70,10 +66,10 @@ public class AuthController {
             throw new IllegalArgumentException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(user.getId());
 
         UserLoginResponseDto responseDto = new UserLoginResponseDto(
-                token, user.getUsername(), user.getEmail()
+                token, user.getId()
         );
 
         return ResponseEntity.ok(responseDto);

@@ -1,7 +1,7 @@
 package com.lin.monkey.service;
 
-import com.lin.monkey.dto.UserRegistrationRequestDto;
-import com.lin.monkey.dto.UserRegistrationResponseDto;
+import com.lin.monkey.dto.UserRequestDto;
+import com.lin.monkey.dto.UserResponseDto;
 import com.lin.monkey.model.User;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.lin.monkey.repository.UserRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 /*
@@ -29,12 +30,12 @@ public class UserService {
     }
 
     /*
-     * Registers user, returns UserRegistrationResponseDto
-     * Accepts UserRegistrationRequestDto from controller
+     * Registers user, returns UserResponseDto
+     * Accepts UserRequestDto from controller
      * Gives data to repository, and it gives it to the db
      * Returns safe dto as an answer
      * */
-    public UserRegistrationResponseDto register(UserRegistrationRequestDto dto) {
+    public UserResponseDto register(UserRequestDto dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Email \"" + dto.getEmail() + "\" is already in use");
         }
@@ -62,7 +63,7 @@ public class UserService {
 
         // Returns saved object as an answer
         // and turns it into safe dto obj unsing fromUser()
-        return UserRegistrationResponseDto.fromUser(savedUser);
+        return UserResponseDto.fromUser(savedUser);
     }
 
     public Optional<User> findByEmail(String email) {
@@ -79,5 +80,13 @@ public class UserService {
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    public Optional<User> findById(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    public boolean existsById(UUID id) {
+        return userRepository.existsById(id);
     }
 }

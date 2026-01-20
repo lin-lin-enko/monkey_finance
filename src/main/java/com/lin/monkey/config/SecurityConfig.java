@@ -25,14 +25,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**")// any request to auth is permitted
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated() // other routes require authorization
+                        .requestMatchers("/api/auth/**").permitAll()// any request to auth is permitted
+                        .requestMatchers("/api/users/me").authenticated()
+                        .anyRequest().authenticated() // other routes require authorization
+
                 )
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // filter checks everything before spring's standard auth
+//                .httpBasic(AbstractHttpConfigurer::disable)
+//                .formLogin(AbstractHttpConfigurer::disable)
 
         return http.build();
     }

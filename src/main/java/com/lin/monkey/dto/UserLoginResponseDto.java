@@ -1,14 +1,14 @@
 package com.lin.monkey.dto;
 
+import java.util.UUID;
+
 public class UserLoginResponseDto {
     private String token;
-    private String username;
-    private String email;
+    private UUID userId;
 
-    public UserLoginResponseDto(String token, String username, String email) {
+    public UserLoginResponseDto(String token, UUID userId) {
         this.token = token;
-        this.username = username;
-        this.email = email;
+        this.userId = userId;
     }
 
     public String getToken() {
@@ -19,19 +19,11 @@ public class UserLoginResponseDto {
         this.token = token;
     }
 
-    public String getUsername() {
-        return username;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }
