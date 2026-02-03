@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260203-011
+      author: lin
+      comment: "Creating an is_default flag to show that this table is default for this user"
+      changes:
+        - addColumn:
+            tableName: ledgers
+            columns:
+              - column:
+                  name: is_default
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # creates unique index by owner_id field for the entries where is_default = true
+        # so among all entries where is_default = true every owner_id must be unique
+        # didn't create unique constraint cause this would mean there can be
+        # only one is_default = false for each user
+        # so partial index is needed
+        - createIndex:
+            indexName: idx_one_default_ledger_per_user
+            tableName: ledgers
+            unique: true
+            columns:
+              - column:
+                  name: owner_id
+            where: "is_default = true"
+
+        - sql:
+            sql:
+              UPDATE ledgers l
+              SET is_default = true
+              FROM (
+              SELECT id, owner_id,
+              ROW_NUMBER() OVER (PARTITION BY owner_id ORDER BY created_at ASC) AS rn
+              FROM ledgers
+              ) sub
+              WHERE l.id = sub.id
+              AND sub.rn = 1
+              AND l.is_default = false;
+
+      rollback:
+        - dropColumn:
+            tableName: ledgers
+            columnName: is_default
+
