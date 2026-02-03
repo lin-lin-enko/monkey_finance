@@ -2,11 +2,16 @@ package com.lin.monkey.service;
 
 import com.lin.monkey.dto.UserRequestDto;
 import com.lin.monkey.dto.UserResponseDto;
+import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.User;
+import com.lin.monkey.model.UsersLedgers;
+import com.lin.monkey.repository.UsersLedgersRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.lin.monkey.repository.UserRepository;
+import com.lin.monkey.repository.LedgerRepository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -23,10 +28,16 @@ public class UserService {
     // final means fields don't change after object creation (immutable)
     private final UserRepository userRepository; // I give it to the user repository cause it gives it to the db
     private final PasswordEncoder passwordEncoder;
+    private final LedgerRepository ledgerRepository;
+    private final UsersLedgersRepository usersLedgersRepository;
+    private final EntityManager entityManager;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.ledgerRepository = ledgerRepository;
+        this.usersLedgersRepository = usersLedgersRepository;
+        this.entityManager = entityManager;
     }
 
     /*
@@ -60,6 +71,19 @@ public class UserService {
         user.setPhoneNumber(dto.getPhoneNumber());
 
         User savedUser = userRepository.save(user);
+        entityManager.refresh(savedUser);
+
+        Ledger startingLedger = new Ledger();
+        startingLedger.setName("My ledger");
+        startingLedger.setDescription("Main ledger for income and expenses");
+        startingLedger.setOwnerId(savedUser.getId());
+        startingLedger = ledgerRepository.save(startingLedger);
+
+        UsersLedgers entry = new UsersLedgers();
+        entry.setUserId(savedUser.getId());
+        entry.setLedgerId(startingLedger.getId());
+        entry.setRole("ADMIN");
+        usersLedgersRepository.save(entry);
 
         // Returns saved object as an answer
         // and turns it into safe dto obj unsing fromUser()

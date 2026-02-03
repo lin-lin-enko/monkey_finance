@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260126-007
+      author: lin
+      changes:
+        - sql:
+            sql:
+              ALTER TABLE transactions ALTER COLUMN subcategory_id SET NOT NULL;
+
+      rollback:
+        - sql:
+            sql:
+              ALTER TABLE transactions ALTER COLUMN subcategory_id DROP NOT NULL;
+

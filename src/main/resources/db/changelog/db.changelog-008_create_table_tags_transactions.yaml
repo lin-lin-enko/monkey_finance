@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260126-008
+      author: lin
+      comment: "Creating a many-to-many linking table for tags of transactions"
+      changes:
+        - createTable:
+            tableName: tags_transactions
+            columns:
+              - column:
+                  name: tag_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: tags_transactions
+            columnNames: tag_id, transaction_id
+            constraintName: tags_transactions_pkey
+
+        - addForeignKeyConstraint:
+            baseTableName: tags_transactions
+            baseColumnNames: tag_id
+            referencedTableName: tags
+            referencedColumnNames: id
+            constraintName: tags_transactions_fk_tag_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: tags_transactions
+            baseColumnNames: transaction_id
+            referencedTableName: transactions
+            referencedColumnNames: id
+            constraintName: tags_transactions_fk_transaction_id
+            onDelete: CASCADE
+
+      rollback:
+        - dropTable:
+            tableName: tags_transactions

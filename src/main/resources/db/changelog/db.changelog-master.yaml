@@ -5,3 +5,17 @@ databaseChangeLog:
       file: db/changelog/db.changelog-002_update_users_fields.yaml
   - include:
       file: db/changelog/db.changelog-003_alter_users_email_to_citext.yaml
+  - include:
+      file: db/changelog/db.changelog-004_rename_finance_book_to_ledger.yaml
+  - include:
+      file: db/changelog/db.changelog-005_cleanup_after_last_renames.yaml
+  - include:
+      file: db/changelog/db.changelog-006_cleanup_after_last_renames.yaml
+  - include:
+      file: db/changelog/db.changelog-007_make_subcategory_id_not_null.yaml
+  - include:
+      file: db/changelog/db.changelog-008_create_table_tags_transactions.yaml
+  - include:
+      file: db/changelog/db.changelog-009_delete_length_constraint_on_descriptions.yaml
+  - include:
+      file: db/changelog/db.changelog-010_unique_constraint_on_owner_id_and_ledger_name.yaml

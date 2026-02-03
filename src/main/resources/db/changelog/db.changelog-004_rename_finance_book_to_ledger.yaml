@@ -1,0 +1,187 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260121-004
+      author: lin
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: users_finance_books
+            constraintName: users_finance_books_fk_finance_book_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: transactions
+            constraintName: transactions_fk_finance_book_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: budgets
+            constraintName: budgets_fk_finance_book_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: goals
+            constraintName: goals_fk_finance_book_id
+
+        - sql:
+            sql: |
+              ALTER TABLE finance_books DROP CONSTRAINT finance_books_name_length_check;
+              ALTER TABLE finance_books DROP CONSTRAINT finance_books_description_length_check;
+
+        - renameTable:
+            oldTableName: finance_books
+            newTableName: ledgers
+
+        - renameTable:
+            oldTableName: users_finance_books
+            newTableName: users_ledgers
+
+        - renameColumn:
+            tableName: users_ledgers
+            oldColumnName: finance_book_id
+            newColumnName: ledger_id
+
+        - renameColumn:
+            tableName: transactions
+            oldColumnName: finance_book_id
+            newColumnName: ledger_id
+
+        - renameColumn:
+            tableName: budgets
+            oldColumnName: finance_book_id
+            newColumnName: ledger_id
+
+        - renameColumn:
+            tableName: goals
+            oldColumnName: finance_book_id
+            newColumnName: ledger_id
+
+        - renameColumn:
+            tableName: ledgers
+            oldColumnName: creator_id
+            newColumnName: owner_id
+
+        - addForeignKeyConstraint:
+            baseTableName: users_ledgers
+            baseColumnNames: ledger_id
+            referencedTableName: ledgers
+            referencedColumnNames: id
+            constraintName: users_ledgers_fk_ledger_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: ledger_id
+            referencedTableName: ledgers
+            referencedColumnNames: id
+            constraintName: transactions_fk_ledger_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: budgets
+            baseColumnNames: ledger_id
+            referencedTableName: ledgers
+            referencedColumnNames: id
+            constraintName: budgets_fk_ledger_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: goals
+            baseColumnNames: ledger_id
+            referencedTableName: ledgers
+            referencedColumnNames: id
+            constraintName: goals_fk_ledger_id
+            onDelete: CASCADE
+
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ADD CONSTRAINT ledgers_name_length_check CHECK (char_length(name) >= 3);
+              ALTER TABLE ledgers ADD CONSTRAINT ledgers_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: users_ledgers
+            constraintName: users_ledgers_fk_ledger_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: transactions
+            constraintName: transactions_fk_ledger_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: budgets
+            constraintName: budgets_fk_ledger_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: goals
+            constraintName: goals_fk_ledger_id
+
+        - sql:
+            sql: |
+              ALTER TABLE ledgers DROP CONSTRAINT ledgers_name_length_check;
+              ALTER TABLE ledgers DROP CONSTRAINT ledgers_description_length_check;
+
+        - renameTable:
+            oldTableName: ledgers
+            newTableName: finance_books
+
+        - renameTable:
+            oldTableName: users_ledgers
+            newTableName: users_finance_books
+
+        - renameColumn:
+            tableName: users_ledgers
+            oldColumnName: ledger_id
+            newColumnName: finance_book_id
+
+        - renameColumn:
+            tableName: transactions
+            oldColumnName: ledger_id
+            newColumnName: finance_book_id
+
+        - renameColumn:
+            tableName: budgets
+            oldColumnName: ledger_id
+            newColumnName: finance_book_id
+
+        - renameColumn:
+            tableName: goals
+            oldColumnName: ledger_id
+            newColumnName: finance_book_id
+
+        - renameColumn:
+            tableName: ledgers
+            oldColumnName: owner_id
+            newColumnName: creator_id
+
+        - addForeignKeyConstraint:
+            baseTableName: users_finance_books
+            baseColumnNames: finance_book_id
+            referencedTableName: finance_books
+            referencedColumnNames: id
+            constraintName: users_finance_books_fk_finance_book_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: finance_book_id
+            referencedTableName: finance_books
+            referencedColumnNames: id
+            constraintName: transactions_fk_finance_book_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: budgets
+            baseColumnNames: finance_book_id
+            referencedTableName: finance_books
+            referencedColumnNames: id
+            constraintName: budgets_fk_finance_book_id
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: goals
+            baseColumnNames: finance_book_id
+            referencedTableName: finance_books
+            referencedColumnNames: id
+            constraintName: goals_fk_finance_book_id
+            onDelete: CASCADE
+
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ADD CONSTRAINT finance_books_name_length_check CHECK (char_length(name) >= 3);
+              ALTER TABLE ledgers ADD CONSTRAINT finance_books_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));

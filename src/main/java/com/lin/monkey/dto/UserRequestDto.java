@@ -2,15 +2,13 @@ package com.lin.monkey.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 public class UserRequestDto {
-
-    @NotBlank
-    private UUID id;
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
@@ -32,14 +30,6 @@ public class UserRequestDto {
 
     @Size(max = 20, message = "Phone number must be less that 20 characters")
     private String phoneNumber;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
 
     public String getUsername() {
         return username;

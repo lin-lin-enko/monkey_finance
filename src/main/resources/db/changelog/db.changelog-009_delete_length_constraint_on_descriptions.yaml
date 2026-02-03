@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260126-009
+      author: lin
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE budget_categories DROP CONSTRAINT udget_categories_description_length_check;
+              ALTER TABLE budget_categories ALTER COLUMN description DROP NOT NULL;
+              ALTER TABLE budgets DROP CONSTRAINT budgets_description_length_check;
+              ALTER TABLE goals DROP CONSTRAINT goals_description_length_check;
+              ALTER TABLE goals ALTER COLUMN description DROP NOT NULL;
+              ALTER TABLE ledgers DROP CONSTRAINT ledgers_description_length_check;
+              ALTER TABLE tags DROP CONSTRAINT tags_description_length_check;
+              ALTER TABLE transactions DROP CONSTRAINT transactions_description_length_check;
+      
+      
+      
+      
+      rollback:
+        - sql:
+            sql:
+              ALTER TABLE budget_categories ADD CONSTRAINT budget_categories_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+              ALTER TABLE budget_categories ALTER COLUMN description SET NOT NULL;
+              ALTER TABLE budgets ADD CONSTRAINT budgets_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+              ALTER TABLE goals ADD CONSTRAINT goals_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+              ALTER TABLE goals ALTER COLUMN description SET NOT NULL;
+              ALTER TABLE tags ADD CONSTRAINT tags_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+              ALTER TABLE transactions ADD CONSTRAINT transactions_description_length_check CHECK (description IS NULL OR (char_length(description) >= 10 AND char_length(description) <= 255));
+

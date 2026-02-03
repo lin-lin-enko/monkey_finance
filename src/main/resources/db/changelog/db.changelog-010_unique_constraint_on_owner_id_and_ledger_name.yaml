@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260129-010
+      author: lin
+      comment: "Making a composite unique constraint, so user won't be able to create several ledgers with the same name"
+      changes:
+        - addUniqueConstraint:
+            tableName: ledgers
+            columnNames: owner_id, name
+            constraintName: ledgers_uk_owner_id_name
+      rollback:
+        - dropUniqueConstraint:
+            tableName: ledgers
+            constraintName: ledgers_uk_owner_id_name
+

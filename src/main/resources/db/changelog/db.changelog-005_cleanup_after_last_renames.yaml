@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260121-005
+      author: lin
+      changes:
+        - sql:
+            sql:
+              ALTER TABLE ledgers RENAME CONSTRAINT finance_books_pkey TO ledgers_pkey;
+              ALTER TABLE users_ledgers RENAME CONSTRAINT users_finance_books_pkey TO users_ledgers_pkey;
+              ALTER TABLE ledgers RENAME CONSTRAINT finance_books_fk_creator_id TO ledgers_fk_owner_id;
+
+      rollback:
+        - sql:
+            sql:
+              ALTER TABLE ledgers RENAME CONSTRAINT ledgers_pkey TO finance_books_pkey;
+              ALTER TABLE users_ledgers RENAME CONSTRAINT users_ledgers_pkey TO users_finance_books_pkey;
+              ALTER TABLE ledgers RENAME CONSTRAINT ledgers_fk_owner_id TO finance_books_fk_creator_id;

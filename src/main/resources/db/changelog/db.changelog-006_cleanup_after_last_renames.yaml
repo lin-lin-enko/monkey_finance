@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260126-006
+      author: lin
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ALTER COLUMN name DROP NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN owner_id DROP NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN created_at DROP NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ALTER COLUMN name SET NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN owner_id SET NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN created_at SET NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE users_ledgers ALTER COLUMN role DROP NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN created_at DROP NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE users_ledgers ALTER COLUMN role SET NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN created_at SET NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE transactions ALTER COLUMN ledger_id DROP NOT NULL;
+              ALTER TABLE budgets ALTER COLUMN ledger_id DROP NOT NULL;
+              ALTER TABLE goals ALTER COLUMN ledger_id DROP NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE transactions ALTER COLUMN ledger_id SET NOT NULL;
+              ALTER TABLE budgets ALTER COLUMN ledger_id SET NOT NULL;
+              ALTER TABLE goals ALTER COLUMN ledger_id SET NOT NULL;
+
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ALTER COLUMN name DROP NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN owner_id DROP NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN created_at DROP NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN role DROP NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN created_at DROP NOT NULL;
+              ALTER TABLE transactions ALTER COLUMN ledger_id DROP NOT NULL;
+              ALTER TABLE budgets ALTER COLUMN ledger_id DROP NOT NULL;
+              ALTER TABLE goals ALTER COLUMN ledger_id DROP NOT NULL;
+
+        - sql:
+            sql: |
+              ALTER TABLE ledgers ALTER COLUMN name SET NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN owner_id SET NOT NULL;
+              ALTER TABLE ledgers ALTER COLUMN created_at SET NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN role SET NOT NULL;
+              ALTER TABLE users_ledgers ALTER COLUMN created_at SET NOT NULL;
+              ALTER TABLE transactions ALTER COLUMN ledger_id SET NOT NULL;
+              ALTER TABLE budgets ALTER COLUMN ledger_id SET NOT NULL;
+              ALTER TABLE goals ALTER COLUMN ledger_id SET NOT NULL;

@@ -52,7 +52,7 @@ public class AuthController {
         UserResponseDto responseDto = userService.register(registrationDto);
 
         // Returns 201 response + Location header + body with response dto
-        return ResponseEntity.created(URI.create("/api/users/" + responseDto.getUsername())).body(responseDto);
+        return ResponseEntity.created(URI.create("/api/users/" + responseDto.username())).body(responseDto);
     }
 
     @PostMapping("/login")

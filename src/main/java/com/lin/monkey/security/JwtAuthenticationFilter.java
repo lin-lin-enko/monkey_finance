@@ -40,26 +40,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        UUID userId = jwtUtil.extractUserId(token);
-        // if there's a user id but user isn't yet authenticated in this request
-        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // getting full user details (roles, privileges etc.)
-            UserDetails userDetails = userDetailsService.loadUserById(userId);
+        try {
+            UUID userId = jwtUtil.extractUserId(token);
+            // if there's a user id but user isn't yet authenticated in this request
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (jwtUtil.validateToken(token)) {
-                System.out.println("Token validated for userId: " + userId);
-                // creating auth object
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                // getting full user details (roles, privileges etc.)
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
 
-                // adding request details (IP, etc.)
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                if (jwtUtil.validateToken(token)) {
+                    System.out.println("Token validated for userId: " + userId);
+                    // creating auth object
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-                // setting auth into context
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("Authentication set in SecurityContext for: " + userDetails.getUsername());
-            } else System.out.println("Token INVALID for userId: " + userId);
+                    // adding request details (IP, etc.)
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    // setting auth into context
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("Authentication set in SecurityContext for: " + userDetails.getUsername());
+                } else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed: " + e.getMessage());
         }
+
 
         // passing request further
         filterChain.doFilter(request, response);

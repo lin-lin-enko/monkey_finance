@@ -22,7 +22,6 @@ public class CustomUserDetails implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPasswordHash();
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        System.out.println("CustomUserDetails created for user: " + username + ", authorities: " + authorities);
     }
 
     public UUID getId() {
