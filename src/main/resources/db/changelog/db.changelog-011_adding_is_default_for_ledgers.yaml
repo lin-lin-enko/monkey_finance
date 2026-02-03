@@ -19,14 +19,12 @@ databaseChangeLog:
         # didn't create unique constraint cause this would mean there can be
         # only one is_default = false for each user
         # so partial index is needed
-        - createIndex:
-            indexName: idx_one_default_ledger_per_user
-            tableName: ledgers
-            unique: true
-            columns:
-              - column:
-                  name: owner_id
-            where: "is_default = true"
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE UNIQUE INDEX idx_one_default_ledger_per_user
+              ON ledgers (owner_id)
+              WHERE is_default = true;
 
         - sql:
             sql:

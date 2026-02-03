@@ -37,6 +37,10 @@ public class Ledger {
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
 
+    public Ledger() {
+        System.out.println("New ledger! isDefault = " + isDefault);
+    }
+
     public UUID getId() {
         return id;
     }

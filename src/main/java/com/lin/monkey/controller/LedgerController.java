@@ -27,7 +27,7 @@ public class LedgerController {
         this.ledgerService = ledgerService;
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<LedgerResponseDto> create(
             @Valid @RequestBody LedgerCreationDto ledgerCreationDto,
             @AuthenticationPrincipal CustomUserDetails userDetails

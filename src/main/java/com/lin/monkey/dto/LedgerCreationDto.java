@@ -11,6 +11,8 @@ public class LedgerCreationDto {
     @Size(max = 255, message = "Description is too long")
     private String description;
 
+    private boolean isDefault = false;
+
     public String getName() {
         return name;
     }
@@ -25,5 +27,13 @@ public class LedgerCreationDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean newIsDefault) {
+        isDefault = newIsDefault;
     }
 }
