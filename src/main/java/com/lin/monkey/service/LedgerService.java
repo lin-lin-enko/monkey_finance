@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,6 +52,7 @@ public class LedgerService {
         return LedgerResponseDto.fromLedger(ledger);
     }
 
+
     private UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() instanceof String) {
@@ -61,15 +63,33 @@ public class LedgerService {
         return userDetails.getId();
     }
 
-    public Optional<Ledger> findByName(String name) {
-        return ledgerRepository.findByName(name);
+    public Optional<Ledger> findByNameAndOwnerId(String name, UUID ownerId) {
+        return ledgerRepository.findByNameAndOwnerId(name, ownerId);
     }
 
-    public boolean existsByName(String name) {
-        return ledgerRepository.existsByName(name);
+    public boolean existsByNameAndOwnerId(String name, UUID ownerId) {
+        return ledgerRepository.existsByNameAndOwnerId(name, ownerId);
     }
 
-    public Optional<Ledger> findByOwnerId(UUID id) {
-        return ledgerRepository.findByOwnerId(id);
+    public List<Ledger> findAllByOwnerId(UUID ownerId) {
+        return ledgerRepository.findAllByOwnerId(ownerId);
     }
+
+    public Optional<Ledger> findByIdAndOwnerId(UUID id, UUID ownerId) {
+        return ledgerRepository.findByIdAndOwnerId(id, ownerId);
+    }
+
+    public Optional<Ledger> findDefaultByOwnerId(UUID ownerId) {
+        return ledgerRepository.findDefaultByOwnerId(ownerId);
+    }
+
+    public void resetDefaultFlag(UUID ownerId) {
+        ledgerRepository.resetDefaultFlag(ownerId);
+    }
+
+    public void setDefaultById(UUID id, UUID ownerId) {
+        ledgerRepository.setDefaultById(id, ownerId);
+    }
+
 }
+

@@ -28,12 +28,13 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (userDetails == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         UUID userId = userDetails.getId();
-        User user = userService.findById(userId).orElseThrow(
-                () -> new UserNotFoundException("User not found with such id: " + userId));
+        User user = userService.findById(userId)
+                .orElseThrow(
+                        () -> new UserNotFoundException("User not found with such id: " + userId));
 
         UserResponseDto responseDto = UserResponseDto.fromUser(
                 user
