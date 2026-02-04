@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-013
+      author: lin
+      comment: "Renamed transaction name column to title for clarity"
+      changes:
+        - renameColumn:
+            tableName: transactions
+            oldColumnName: name
+            newColumnName: title
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE transactions
+              RENAME CONSTRAINT transactions_name_length_check TO transactions_title_length_check;
+
+      rollback:
+        - renameColumn:
+            tableName: transactions
+            oldColumnName: title
+            newColumnName: name
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE transactions
+              RENAME CONSTRAINT transactions_title_length_check TO transactions_name_length_check;

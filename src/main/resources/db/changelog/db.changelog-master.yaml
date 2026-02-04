@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog-011_adding_is_default_for_ledgers.yaml
   - include:
       file: db/changelog/db.changelog-012_subcategories_description_check_fix.yaml
+  - include:
+      file: db/changelog/db.changelog-013_rename_transaction_name_to_title.yaml
