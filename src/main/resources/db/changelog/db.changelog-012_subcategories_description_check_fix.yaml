@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-012
+      author: lin
+      comment: "Previously the length check didn't include that description can be null"
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE subcategories
+              DROP CONSTRAINT subcategories_description_length_check;
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE subcategories
+              ADD CONSTRAINT subcategories_description_length_check
+              CHECK (description IS NULL OR (char_length(description) >= 30 AND char_length(description) <= 255));
+
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE subcategories
+              DROP CONSTRAINT subcategories_description_length_check;
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE subcategories
+              ADD CONSTRAINT subcategories_description_length_check
+              CHECK ((char_length(description) >= 30 AND char_length(description) <= 255));
+            
+

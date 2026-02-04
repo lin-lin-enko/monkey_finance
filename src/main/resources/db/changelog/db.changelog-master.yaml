@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog-010_unique_constraint_on_owner_id_and_ledger_name.yaml
   - include:
       file: db/changelog/db.changelog-011_adding_is_default_for_ledgers.yaml
+  - include:
+      file: db/changelog/db.changelog-012_subcategories_description_check_fix.yaml
