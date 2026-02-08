@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-015
+      author: lin
+      comment: "Add transaction_type enum and type column"
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: |-
+              DO $$
+              BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
+                  CREATE TYPE transaction_type AS ENUM ('EXPENSE', 'INCOME', 'SAVINGS', 'TRANSFER');
+                END IF;
+              END
+              $$;
+
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: type
+                  type: transaction_type
+                  defaultValueComputed: "'EXPENSE'::transaction_type"
+                  constraints:
+                    nullable: false
+
+      rollback:
+        - dropColumn:
+            tableName: transactions
+            columnName: type
+
+        - sql:
+            dbms: postgresql
+            sql: DROP TYPE IF EXISTS transaction_type CASCADE;

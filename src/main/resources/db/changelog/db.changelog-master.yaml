@@ -25,3 +25,13 @@ databaseChangeLog:
       file: db/changelog/db.changelog-012_subcategories_description_check_fix.yaml
   - include:
       file: db/changelog/db.changelog-013_rename_transaction_name_to_title.yaml
+  - include:
+      file: db/changelog/db.changelog-014_delete_category_type.yaml
+  - include:
+      file: db/changelog/db.changelog-015_add_transaction_type.yaml
+  - include:
+      file: db/changelog/db.changelog-016_add_standard_categories.yaml
+  - include:
+      file: db/changelog/db.changelog-017_making_subcategory_id_in_transactions_nullable.yaml
+  - include:
+      file: db/changelog/db.changelog-018-adding_transactions_category_id.yaml

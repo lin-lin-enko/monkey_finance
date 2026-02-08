@@ -37,7 +37,7 @@ public class LedgerService {
         ledger.setName(dto.getName());
         ledger.setDescription(dto.getDescription());
         ledger.setOwnerId(userId);
-        ledger.setDefault(false);
+        ledger.setDefault(dto.isDefault());
         try {
             ledger = ledgerRepository.save(ledger);
         } catch (DataIntegrityViolationException e) {

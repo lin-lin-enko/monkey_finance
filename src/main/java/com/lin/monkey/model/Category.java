@@ -23,10 +23,6 @@ public class Category {
     @Column(columnDefinition = "text")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", columnDefinition = "category_type", nullable = false)
-    private CategoryType type;
-
     @Size(max = 255, message = "Icon URL can't be longer than 255 characters")
     @Column(name = "icon_url")
     private String iconUrl;
@@ -53,14 +49,6 @@ public class Category {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public CategoryType getType() {
-        return type;
-    }
-
-    public void setType(CategoryType type) {
-        this.type = type;
     }
 
     public String getIconUrl() {
@@ -90,9 +78,5 @@ public class Category {
     @Override
     public int hashCode() {
         return id.hashCode();
-    }
-
-    public enum CategoryType {
-        INCOME, EXPENSE
     }
 }

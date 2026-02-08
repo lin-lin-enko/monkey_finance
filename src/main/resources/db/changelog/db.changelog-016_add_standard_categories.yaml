@@ -1,0 +1,688 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-013
+      author: lin
+      changes:
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Salary"
+              - column:
+                  name: description
+                  value: "Money you get for your work on a regular basis"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/salary.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Freelance & Side Income"
+              - column:
+                  name: description
+                  value: "Money you get for \"working on yourself\""
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/freelance.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Healthcare"
+              - column:
+                  name: description
+                  value: "Everything related to medicine, doctors etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/healthcare.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Tax"
+              - column:
+                  name: description
+                  value: "Paying taxes, getting taxes"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/tax.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Mortgage"
+              - column:
+                  name: description
+                  value: "Money paid to get a house in the future"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/mortgage.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Debt Repayment"
+              - column:
+                  name: description
+                  value: "Money given to someone temporarily"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/debt.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Education"
+              - column:
+                  name: description
+                  value: "Everything related to studying"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/education.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Loan Repayment"
+              - column:
+                  name: description
+                  value: "Money you're temporarily given by a bank"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/loan.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Sport"
+              - column:
+                  name: description
+                  value: "Gym, yoga, running, etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/sport.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Groceries"
+              - column:
+                  name: description
+                  value: "Everything you buy to cook and eat food at home"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/groceries.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Hygiene"
+              - column:
+                  name: description
+                  value: "Things to keep yourself clean"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/hygiene.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Clothing & Shoes"
+              - column:
+                  name: description
+                  value: "Shirts, dresses, sneakers etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/clothing.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Utilities"
+              - column:
+                  name: description
+                  value: "Electricity, hot and cold water, heating."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/utilities.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Home & Furniture"
+              - column:
+                  name: description
+                  value: "Sofas, tables, cleaning supplies etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/furniture.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Beauty & Cosmetics"
+              - column:
+                  name: description
+                  value: "Things you put on your skin to make it healthier and prettier"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/skincare.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Entertainment"
+              - column:
+                  name: description
+                  value: "Things you do for entertainment"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/entertainment.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Gifts"
+              - column:
+                  name: description
+                  value: "Items or other things you give people on special occasions"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/gifts.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Investment Income"
+              - column:
+                  name: description
+                  value: "Profits from investments"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/investment_income.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Transport"
+              - column:
+                  name: description
+                  value: "Means of transportation"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/transport.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Rent"
+              - column:
+                  name: description
+                  value: "What you pay to rent an appartment"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/rent.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Cafes & Restaurants"
+              - column:
+                  name: description
+                  value: "Money for eating somewhere in a city"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/cafe.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Subscriptions"
+              - column:
+                  name: description
+                  value: "Monthly payments for different services"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/subscription.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Internet"
+              - column:
+                  name: description
+                  value: "Payment for internet usage"
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/internet.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Phone & Internet"
+              - column:
+                  name: description
+                  value: "Money you pay to call, send SMS, surf in the internet etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/phone.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Smoking"
+              - column:
+                  name: description
+                  value: "What you pay to smoke, buy tobacco etc."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/smoking.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Alcohol"
+              - column:
+                  name: description
+                  value: "Money you spend to buy alcohol."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/alcohol.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Travelling"
+              - column:
+                  name: description
+                  value: "Money you spend on travelling."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/travelling.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Insurance"
+              - column:
+                  name: description
+                  value: "Money you pay to be protected and/or compensated when something happens."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/insurance.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Kids"
+              - column:
+                  name: description
+                  value: "Everything you spend to care for your children."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/child.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Refunds"
+              - column:
+                  name: description
+                  value: "Refunds for the purchaces."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/refund.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Cashback"
+              - column:
+                  name: description
+                  value: "Small percentage of money you get back from purchacing something."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/cashback.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Debt repaid to me"
+              - column:
+                  name: description
+                  value: "Money someone returns to you after borrowing."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/debt_repaid.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Selling items"
+              - column:
+                  name: description
+                  value: "Money you get by selling something."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/selling_items.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Transfer"
+              - column:
+                  name: description
+                  value: "Transfer between accounts."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/money_transfer.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Pet Care"
+              - column:
+                  name: description
+                  value: "Money for your pets."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/pet_care.png'
+              - column:
+                  name: color
+                  value: '#000000'
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: name
+                  value: "Charity & Donations"
+              - column:
+                  name: description
+                  value: "Costs you donate for a good cause and for people in need."
+              - column:
+                  name: icon_url
+                  value: '/assets/categories/icons/charity.png'
+              - column:
+                  name: color
+                  value: '#000000'

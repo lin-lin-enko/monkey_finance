@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-017
+      author: lin
+      comment: "Making subcategory_id in transactions nullable to save transaction when subcategory is deleted"
+      changes:
+        - dropNotNullConstraint:
+            tableName: transactions
+            columnName: subcategory_id
+            columnDataType: uuid
+
+      rollback:
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: subcategory_id
+            columnDataType: uuid

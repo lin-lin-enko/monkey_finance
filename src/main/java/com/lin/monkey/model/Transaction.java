@@ -4,6 +4,7 @@ package com.lin.monkey.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import jdk.jfr.Timestamp;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -33,6 +34,11 @@ public class Transaction {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    @ColumnTransformer(read = "type::text", write = "?::transaction_type")
+    private TransactionType type = TransactionType.EXPENSE;
+
     @NotBlank(message = "Transaction must have a title")
     @Size(min = 3, max = 60, message = "Title must be 3 to 60 characters long")
     @Column(nullable = false)
@@ -42,10 +48,16 @@ public class Transaction {
     private String description;
 
     @NotNull
+    @Column(name = "category_id", nullable = false)
+    private UUID categoryId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", insertable = false, nullable = false, updatable = false)
+    private Category category;
+
     @Column(name = "subcategory_id", nullable = false)
     private UUID subcategoryId;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subcategory_id", insertable = false, nullable = false, updatable = false)
     private Subcategory subcategory;
@@ -82,6 +94,14 @@ public class Transaction {
         this.amount = amount;
     }
 
+    public TransactionType getType() {
+        return type;
+    }
+
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -96,6 +116,19 @@ public class Transaction {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+        this.categoryId = (category != null) ? category.getId() : null;
     }
 
     public UUID getSubcategoryId() {

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260207-018
+      author: lin
+      comment: "Adding category_id into transactions for easier access and analysis"
+      changes:
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: transactions_fk_category_id
+                    references: categories(id)
+
+      rollback:
+        - dropColumn:
+            tableName: transactions
+            columnName: category_id

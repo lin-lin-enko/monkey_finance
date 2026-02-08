@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260204-016
+      author: lin
+      comment: "Removing column \"type\" from categories to make the app more flexible and expendable in the future. Type will now be in the transaction (changeset 20260204-015)"
+      changes:
+        - dropColumn:
+            tableName: categories
+            columnName: type
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              DROP TYPE IF EXISTS category_type CASCADE;
+
+
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TYPE category_type AS ENUM ('INCOME', 'EXPENSE');
+
+        - addColumn:
+            tableName: categories
+            columns:
+              - column:
+                  name: type
+                  type: category_type
+                  defaultValue: 'EXPENSE'
+                  constraints:
+                    nullable: false
