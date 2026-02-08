@@ -4,12 +4,15 @@ import com.lin.monkey.dto.TransactionCreationDto;
 import com.lin.monkey.dto.TransactionResponseDto;
 import com.lin.monkey.security.CustomUserDetails;
 import com.lin.monkey.service.TransactionService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,5 +38,17 @@ public class TransactionController {
         TransactionResponseDto responseDto = transactionService.create(creationDto, ledgerId);
 
         return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TransactionResponseDto>> getAll(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID ledgerId
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok().body(transactionService.getAll(ledgerId));
     }
 }

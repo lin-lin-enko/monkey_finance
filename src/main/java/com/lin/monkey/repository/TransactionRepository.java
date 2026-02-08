@@ -31,8 +31,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             """)
     Page<Transaction> findAllByUserId(@NonNull @Param("userId") UUID userId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"subcategory", "category"})
-    List<Transaction> findAllByLedgerId(@NonNull UUID ledgerId);
+    @Query("""
+                    SELECT t FROM Transaction t
+                    JOIN FETCH t.ledger
+                    JOIN FETCH t.category
+                    LEFT JOIN FETCH t.subcategory
+                    WHERE t.ledger.id = :ledgerId
+            """)
+    List<Transaction> findAllByLedgerId(@Param("ledgerId") UUID ledgerId);
 
     @Query("""
                     SELECT t FROM Transaction t

@@ -8,14 +8,16 @@ import com.lin.monkey.repository.LedgerRepository;
 import com.lin.monkey.repository.SubcategoryRepository;
 import com.lin.monkey.repository.TransactionRepository;
 import com.lin.monkey.security.CustomUserDetails;
-import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -62,6 +64,15 @@ public class TransactionService {
                 .orElseThrow(() -> new IllegalArgumentException("Transaction wasn't found"));
 
         return TransactionResponseDto.fromTransaction(transaction);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDto> getAll(UUID ledgerId) {
+        List<Transaction> transactions = transactionRepository.findAllByLedgerId(ledgerId);
+
+        return transactions.stream()
+                .map(TransactionResponseDto::fromTransaction)
+                .toList();
     }
 
     private UUID getCurrentUserId() {
