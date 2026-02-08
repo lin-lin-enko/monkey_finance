@@ -26,7 +26,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     })
     @Query("""
                     SELECT t FROM Transaction t
-                    JOIN t.ledger l
+                    JOIN FETCH t.ledger l
                     WHERE l.ownerId = :userId
             """)
     Page<Transaction> findAllByUserId(@NonNull @Param("userId") UUID userId, Pageable pageable);
@@ -42,16 +42,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
 
     @Query("""
                     SELECT t FROM Transaction t
-                    JOIN t.ledger l
+                    JOIN FETCH t.ledger l
                     WHERE l.ownerId = :userId
             """)
     List<Transaction> findAllByUserId(@NonNull @Param("userId") UUID userId);
 
-    @EntityGraph(attributePaths = {
-            "ledger",
-            "subcategory",
-            "category"
-    })
+    @Query("""
+                    SELECT t FROM Transaction t
+                    JOIN FETCH t.ledger
+                    JOIN FETCH t.category
+                    LEFT JOIN FETCH t.subcategory
+                    WHERE t.id = :id
+            """)
     @NonNull Optional<Transaction> findById(@NonNull UUID id);
 
     boolean existsById(UUID id);

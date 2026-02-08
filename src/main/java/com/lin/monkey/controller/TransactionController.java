@@ -51,4 +51,15 @@ public class TransactionController {
 
         return ResponseEntity.ok().body(transactionService.getAll(ledgerId));
     }
+
+    @GetMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> getById(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID transactionId
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok().body(transactionService.getById(transactionId));
+    }
 }

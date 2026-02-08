@@ -66,7 +66,6 @@ public class TransactionService {
         return TransactionResponseDto.fromTransaction(transaction);
     }
 
-    @Transactional(readOnly = true)
     public List<TransactionResponseDto> getAll(UUID ledgerId) {
         List<Transaction> transactions = transactionRepository.findAllByLedgerId(ledgerId);
 
@@ -74,6 +73,13 @@ public class TransactionService {
                 .map(TransactionResponseDto::fromTransaction)
                 .toList();
     }
+
+    public TransactionResponseDto getById(UUID transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+
+        return transaction != null ? TransactionResponseDto.fromTransaction(transaction) : null;
+    }
+
 
     private UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
