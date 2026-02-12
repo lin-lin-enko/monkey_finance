@@ -3,11 +3,9 @@ package com.lin.monkey.service;
 import com.lin.monkey.dto.TransactionCreationDto;
 import com.lin.monkey.dto.TransactionResponseDto;
 import com.lin.monkey.model.*;
-import com.lin.monkey.repository.CategoryRepository;
-import com.lin.monkey.repository.LedgerRepository;
-import com.lin.monkey.repository.SubcategoryRepository;
-import com.lin.monkey.repository.TransactionRepository;
+import com.lin.monkey.repository.*;
 import com.lin.monkey.security.CustomUserDetails;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -66,18 +64,19 @@ public class TransactionService {
         return TransactionResponseDto.fromTransaction(transaction);
     }
 
-    public List<TransactionResponseDto> getAll(UUID ledgerId) {
-        List<Transaction> transactions = transactionRepository.findAllByLedgerId(ledgerId);
-
-        return transactions.stream()
-                .map(TransactionResponseDto::fromTransaction)
-                .toList();
-    }
 
     public TransactionResponseDto getById(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
 
         return transaction != null ? TransactionResponseDto.fromTransaction(transaction) : null;
+    }
+
+    public List<TransactionResponseDto> getFiltered(UUID ledgerId, UUID categoryId, UUID subcategoryId, TransactionType type, LocalDateTime fromDate, LocalDateTime toDate) {
+        Specification<Transaction> specifications = TransactionSpecifications.withFilters(
+                ledgerId, categoryId, subcategoryId, type, fromDate, toDate
+        );
+        List<Transaction> transactions = transactionRepository.findAll(specifications);
+        return transactions.stream().map(TransactionResponseDto::fromTransaction).toList();
     }
 
 
