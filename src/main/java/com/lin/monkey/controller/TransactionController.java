@@ -2,20 +2,18 @@ package com.lin.monkey.controller;
 
 import com.lin.monkey.dto.TransactionCreationDto;
 import com.lin.monkey.dto.TransactionResponseDto;
+import com.lin.monkey.dto.TransactionUpdateDto;
 import com.lin.monkey.model.TransactionType;
 import com.lin.monkey.security.CustomUserDetails;
 import com.lin.monkey.service.TransactionService;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +39,19 @@ public class TransactionController {
 
         TransactionResponseDto responseDto = transactionService.create(creationDto, ledgerId);
 
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> update(
+            @Valid @RequestBody TransactionUpdateDto updateDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID transactionId
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TransactionResponseDto responseDto = transactionService.update(updateDto, transactionId);
         return ResponseEntity.ok(responseDto);
     }
 
