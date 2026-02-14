@@ -55,6 +55,18 @@ public class TransactionController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @DeleteMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> deleteById(
+            @PathVariable UUID transactionId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TransactionResponseDto responseDto = transactionService.deleteById(transactionId);
+        return ResponseEntity.ok(responseDto);
+    }
+
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponseDto> getById(
             @AuthenticationPrincipal CustomUserDetails userDetails,

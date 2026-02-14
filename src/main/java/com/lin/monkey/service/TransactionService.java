@@ -41,8 +41,15 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDto create(TransactionCreationDto dto, UUID ledgerId) {
-        Ledger ledger = ledgerRepository.findByIdAndOwnerId(ledgerId, getCurrentUserId())
-                .orElseThrow(() -> new AccessDeniedException("Ledger wasn't found or access denied"));
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("Ledger wasn't found"));
+
+        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+
+        if (!"ADMIN".equals(userRole)) {
+            throw new AccessDeniedException("Only admins can create transations");
+        }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Category wasn't found"));
@@ -128,6 +135,25 @@ public class TransactionService {
         return TransactionResponseDto.fromTransaction(updatedTransaction);
     }
 
+    @Transactional
+    public TransactionResponseDto deleteById(UUID transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new AccessDeniedException("Transaction wasn't found or access denied"));
+        UUID ledgerId = transaction.getLedgerId();
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("Ledger wasn't found"));
+        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+        if (!"ADMIN".equals(userRole)) {
+            throw new AccessDeniedException("Only admins can edit transations");
+        }
+        try {
+            transactionRepository.deleteById(transactionId);
+            return TransactionResponseDto.fromTransaction(transaction);
+        } catch (Exception e) {
+            throw new RuntimeException("Transaction wasn't deleted");
+        }
+    }
 
     public TransactionResponseDto getById(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId).orElse(null);

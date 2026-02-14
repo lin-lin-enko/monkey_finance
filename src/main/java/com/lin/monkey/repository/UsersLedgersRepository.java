@@ -21,8 +21,8 @@ public interface UsersLedgersRepository extends JpaRepository<UsersLedgers, User
 
     @Query("SELECT CASE WHEN COUNT (ul) > 0 THEN true ELSE false END " +
             "FROM UsersLedgers ul " +
-            "WHERE ul.id.userId = :userId " +
-            "AND ul.id.ledgerId = :ledgerId " +
+            "WHERE ul.userId = :userId " +
+            "AND ul.ledgerId = :ledgerId " +
             "AND ul.role = :role")
     boolean existsByUserIdAndLedgerIdAndRole(
             @Param("userId") UUID userId,
@@ -33,15 +33,15 @@ public interface UsersLedgersRepository extends JpaRepository<UsersLedgers, User
 
     @Query("SELECT ul.role " +
             "FROM UsersLedgers ul " +
-            "WHERE ul.id.userId = :userId " +
-            "AND ul.id.ledgerId = :ledgerId")
+            "WHERE ul.userId = :userId " +
+            "AND ul.ledgerId = :ledgerId")
     Optional<String> findUserRoleInLedger(
             @Param("userId") UUID userId,
             @Param("ledgerId") UUID ledgerId
     );
-    
+
     @Query("SELECT ul " +
             "FROM UsersLedgers ul " +
-            "WHERE ul.id.ledgerId = :ledgerId")
+            "WHERE ul.ledgerId = :ledgerId")
     List<UsersLedgers> findAllUsersAndRolesInLedger(@Param("ledgerId") UUID ledgerId);
 }
