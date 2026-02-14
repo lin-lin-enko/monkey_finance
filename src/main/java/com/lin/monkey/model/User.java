@@ -38,6 +38,9 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "default_ledger_id")
+    private UUID defaultLedgerId = null;
+
     public UUID getId() {
         return id;
     }
@@ -84,5 +87,13 @@ public class User {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public UUID getDefaultLedgerId() {
+        return defaultLedgerId;
+    }
+
+    public void setDefaultLedgerId(UUID defaultLedgerId) {
+        this.defaultLedgerId = defaultLedgerId;
     }
 }

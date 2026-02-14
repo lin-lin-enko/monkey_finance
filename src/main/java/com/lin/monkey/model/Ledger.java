@@ -34,9 +34,6 @@ public class Ledger {
     @JoinColumn(name = "owner_id", insertable = false, updatable = false, nullable = false)
     private User owner;
 
-    @Column(name = "is_default", nullable = false)
-    private boolean isDefault = false;
-
     public UUID getId() {
         return id;
     }
@@ -72,15 +69,7 @@ public class Ledger {
     public User getOwner() {
         return owner;
     }
-
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public void setDefault(boolean isDefault) {
-        this.isDefault = isDefault;
-    }
-
+    
     // when there are 2 obj with the same id
     @Override
     public boolean equals(Object obj) {

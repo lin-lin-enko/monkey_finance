@@ -35,3 +35,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog-017_making_subcategory_id_in_transactions_nullable.yaml
   - include:
       file: db/changelog/db.changelog-018-adding_transactions_category_id.yaml
+  - include:
+      file: db/changelog/db.changelog-019-put_default_ledger_id_into_users.yaml

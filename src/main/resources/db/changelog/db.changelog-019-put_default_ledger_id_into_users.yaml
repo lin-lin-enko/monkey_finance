@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260214-019
+      author: lin
+      comment: "Deleting is_default from ledger, adding default_ledger_id into users table for more flexibility"
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: default_ledger_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: users_fk_default_ledger
+                    references: ledgers(id)
+                    deleteSetNull: true
+
+        - sql:
+            sql: |
+              UPDATE users u
+              SET default_ledger_id = (
+              SELECT ledger_id
+              FROM users_ledgers ul
+              WHERE ul.user_id = u.id
+              ORDER BY ul.created_at ASC
+              LIMIT 1
+              )
+              WHERE default_ledger_id IS NULL
+              AND EXISTS (SELECT 1 FROM users_ledgers ul WHERE ul.user_id = u.id);
+
+        - createIndex:
+            tableName: users
+            columns:
+              - column:
+                  name: default_ledger_id
+            indexName: idx_users_default_ledger_id
+
+        - dropColumn:
+            tableName: ledgers
+            columnName: is_default
+
+      rollback:
+        - addColumn:
+            tableName: ledgers
+            columns:
+              - column:
+                  name: is_default
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        - dropIndex:
+            tableName: users
+            indexName: idx_users_default_ledger_id
+
+        - dropColumn:
+            tableName: users
+            columnName: default_ledger_id

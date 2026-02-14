@@ -1,7 +1,9 @@
 package com.lin.monkey.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lin.monkey.dto.LedgerCreationDto;
 import com.lin.monkey.dto.LedgerResponseDto;
+import com.lin.monkey.dto.LedgerUpdateDto;
 import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.repository.LedgerRepository;
@@ -10,6 +12,7 @@ import com.lin.monkey.repository.UsersLedgersRepository;
 import com.lin.monkey.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,7 +40,6 @@ public class LedgerService {
         ledger.setName(dto.getName());
         ledger.setDescription(dto.getDescription());
         ledger.setOwnerId(userId);
-        ledger.setDefault(dto.isDefault());
         try {
             ledger = ledgerRepository.save(ledger);
         } catch (DataIntegrityViolationException e) {
@@ -53,6 +55,28 @@ public class LedgerService {
         return LedgerResponseDto.fromLedger(ledger);
     }
 
+    public List<Ledger> findAllByOwnerId(UUID ownerId) {
+        return ledgerRepository.findAllByOwnerId(ownerId);
+    }
+
+
+    @Transactional
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public LedgerResponseDto update(LedgerUpdateDto dto, UUID ledgerId) {
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
+        canAccessAndMaintain(ledgerId);
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            ledger.setName(dto.getName());
+        }
+        if (dto.getDescription() != null) {
+            ledger.setDescription(dto.getDescription());
+        }
+
+        Ledger updatedLedger = ledgerRepository.save(ledger);
+        return LedgerResponseDto.fromLedger(updatedLedger);
+    }
+
 
     private UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -64,33 +88,17 @@ public class LedgerService {
         return userDetails.getId();
     }
 
-    public Optional<Ledger> findByNameAndOwnerId(String name, UUID ownerId) {
-        return ledgerRepository.findByNameAndOwnerId(name, ownerId);
+    private void canAccess(UUID ledgerId) {
+        usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
     }
 
-    public boolean existsByNameAndOwnerId(String name, UUID ownerId) {
-        return ledgerRepository.existsByNameAndOwnerId(name, ownerId);
+    private void canAccessAndMaintain(UUID ledgerId) {
+        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+        if (!"ADMIN".equals(userRole)) {
+            throw new AccessDeniedException("Only admins can create, delete or change transations");
+        }
     }
-
-    public List<Ledger> findAllByOwnerId(UUID ownerId) {
-        return ledgerRepository.findAllByOwnerId(ownerId);
-    }
-
-    public Optional<Ledger> findByIdAndOwnerId(UUID id, UUID ownerId) {
-        return ledgerRepository.findByIdAndOwnerId(id, ownerId);
-    }
-
-    public Optional<Ledger> findDefaultByOwnerId(UUID ownerId) {
-        return ledgerRepository.findDefaultByOwnerId(ownerId);
-    }
-
-    public void resetDefaultFlag(UUID ownerId) {
-        ledgerRepository.resetDefaultFlag(ownerId);
-    }
-
-    public void setDefaultById(UUID id, UUID ownerId) {
-        ledgerRepository.setDefaultById(id, ownerId);
-    }
-
 }
 

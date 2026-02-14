@@ -41,15 +41,11 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDto create(TransactionCreationDto dto, UUID ledgerId) {
+        canAccessAndMaintain(ledgerId);
+
         Ledger ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new AccessDeniedException("Ledger wasn't found"));
 
-        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
-                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-
-        if (!"ADMIN".equals(userRole)) {
-            throw new AccessDeniedException("Only admins can create transations");
-        }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Category wasn't found"));
@@ -78,23 +74,14 @@ public class TransactionService {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public TransactionResponseDto update(TransactionUpdateDto dto, UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new AccessDeniedException("Transaction wasn't found or access denied"));
-        UUID currentLedgerId = transaction.getLedgerId();
-        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), currentLedgerId)
-                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
 
-        if (!"ADMIN".equals(userRole)) {
-            throw new AccessDeniedException("Only admins can edit transations");
-        }
+        canAccessAndMaintain(transaction.getLedgerId());
 
         if (dto.getLedgerId() != null) {
+            canAccessAndMaintain(dto.getLedgerId());
             Ledger targetLedger = ledgerRepository.findById(dto.getLedgerId())
                     .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
-            String targetLedgerRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), dto.getLedgerId())
-                    .orElseThrow(() -> new AccessDeniedException("You have no rights on the target ledger"));
-            if (!"ADMIN".equals(targetLedgerRole)) {
-                throw new AccessDeniedException("You must be admin in the target ledger");
-            }
 
             transaction.setLedger(targetLedger);
         }
@@ -139,14 +126,7 @@ public class TransactionService {
     public TransactionResponseDto deleteById(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new AccessDeniedException("Transaction wasn't found or access denied"));
-        UUID ledgerId = transaction.getLedgerId();
-        Ledger ledger = ledgerRepository.findById(ledgerId)
-                .orElseThrow(() -> new AccessDeniedException("Ledger wasn't found"));
-        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
-                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-        if (!"ADMIN".equals(userRole)) {
-            throw new AccessDeniedException("Only admins can edit transations");
-        }
+        canAccessAndMaintain(transaction.getLedgerId());
         try {
             transactionRepository.deleteById(transactionId);
             return TransactionResponseDto.fromTransaction(transaction);
@@ -156,12 +136,16 @@ public class TransactionService {
     }
 
     public TransactionResponseDto getById(UUID transactionId) {
-        Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+        Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(
+                () -> new IllegalArgumentException("Transaction wasn't found")
+        );
+        canAccess(transaction.getLedgerId());
 
-        return transaction != null ? TransactionResponseDto.fromTransaction(transaction) : null;
+        return TransactionResponseDto.fromTransaction(transaction);
     }
 
     public List<TransactionResponseDto> getFiltered(UUID ledgerId, UUID categoryId, UUID subcategoryId, TransactionType type, LocalDateTime fromDate, LocalDateTime toDate) {
+        canAccess(ledgerId);
         Specification<Transaction> specifications = TransactionSpecifications.withFilters(
                 ledgerId, categoryId, subcategoryId, type, fromDate, toDate
         );
@@ -177,6 +161,19 @@ public class TransactionService {
         }
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         return userDetails.getId();
+    }
+
+    private void canAccess(UUID ledgerId) {
+        usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+    }
+
+    private void canAccessAndMaintain(UUID ledgerId) {
+        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+        if (!"ADMIN".equals(userRole)) {
+            throw new AccessDeniedException("Only admins can create, delete or change transations");
+        }
     }
 
 }

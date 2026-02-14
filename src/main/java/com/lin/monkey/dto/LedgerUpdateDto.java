@@ -3,8 +3,7 @@ package com.lin.monkey.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class LedgerCreationDto {
-    @NotBlank(message = "Name is required")
+public class LedgerUpdateDto {
     @Size(min = 3, max = 60, message = "Name must be 3 to 60 characters long")
     private String name;
 
@@ -26,4 +25,5 @@ public class LedgerCreationDto {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }

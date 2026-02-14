@@ -20,14 +20,17 @@ public interface LedgerRepository extends JpaRepository<Ledger, UUID> {
 
     Optional<Ledger> findByIdAndOwnerId(UUID id, UUID ownerId);
 
-    @Query("SELECT l FROM Ledger l WHERE l.ownerId = :ownerId AND l.isDefault = true")
-    Optional<Ledger> findDefaultByOwnerId(UUID ownerId);
-
-    @Modifying
-    @Query("UPDATE Ledger l SET l.isDefault = false WHERE l.ownerId = :ownerId")
-    void resetDefaultFlag(@Param("ownerId") UUID ownerId);
-
-    @Modifying
-    @Query("UPDATE Ledger l SET l.isDefault = true WHERE l.id = :ledgerId AND ownerId = :ownerId")
-    void setDefaultById(@Param("ledgerId") UUID ledgerId, @Param("ownerId") UUID ownerId);
+//    @Query("SELECT l FROM Ledger l WHERE l.ownerId = :ownerId AND l.isDefault = true")
+//    Optional<Ledger> findDefaultByOwnerId(UUID ownerId);
+//
+//    @Query("SELECT l FROM Ledger l WHERE l.ownerId = :ownerId AND l.isDefault = true")
+//    boolean existsDefaultByOwnerId(UUID ownerId);
+//
+//    @Modifying
+//    @Query("UPDATE Ledger l SET l.isDefault = false WHERE l.ownerId = :ownerId")
+//    void resetDefaultFlag(@Param("ownerId") UUID ownerId);
+//
+//    @Modifying
+//    @Query("UPDATE Ledger l SET l.isDefault = true WHERE l.id = :ledgerId AND ownerId = :ownerId")
+//    void setDefaultById(@Param("ledgerId") UUID ledgerId, @Param("ownerId") UUID ownerId);
 }

@@ -2,6 +2,7 @@ package com.lin.monkey.controller;
 
 import com.lin.monkey.dto.LedgerCreationDto;
 import com.lin.monkey.dto.LedgerResponseDto;
+import com.lin.monkey.dto.LedgerUpdateDto;
 import com.lin.monkey.model.Ledger;
 import com.lin.monkey.security.CustomUserDetails;
 import com.lin.monkey.service.LedgerService;
@@ -10,12 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -41,8 +40,21 @@ public class LedgerController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
+//    @PatchMapping("/{ledgerId}")
+//    public ResponseEntity<LedgerResponseDto> update(
+//            @AuthenticationPrincipal CustomUserDetails userDetails,
+//            @Valid @RequestBody LedgerUpdateDto ledgerUpdateDto,
+//            @PathVariable UUID ledgerId
+//    ) {
+//        if (userDetails == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//        LedgerResponseDto responseDto = ledgerService.update(ledgerUpdateDto, ledgerId);
+//        return ResponseEntity.ok(responseDto);
+//    }
+
     @GetMapping
-    public ResponseEntity<List<LedgerResponseDto>> getAllLedgers(
+    public ResponseEntity<List<LedgerResponseDto>> getAllByOwnerId(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (userDetails == null) {
@@ -61,19 +73,19 @@ public class LedgerController {
 
     }
 
-    @GetMapping("/default")
-    public ResponseEntity<LedgerResponseDto> getDefaultLedger(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        UUID userId = userDetails.getId();
-
-        return ledgerService.findDefaultByOwnerId(userId)
-                .map(LedgerResponseDto::fromLedger)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+//    @GetMapping("/default")
+//    public ResponseEntity<LedgerResponseDto> getDefaultLedger(
+//            @AuthenticationPrincipal CustomUserDetails userDetails
+//    ) {
+//        if (userDetails == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//
+//        UUID userId = userDetails.getId();
+//
+//        return ledgerService.findDefaultByOwnerId(userId)
+//                .map(LedgerResponseDto::fromLedger)
+//                .map(ResponseEntity::ok)
+//                .orElseGet(() -> ResponseEntity.notFound().build());
+//    }
 }

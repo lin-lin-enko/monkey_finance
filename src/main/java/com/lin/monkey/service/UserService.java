@@ -77,7 +77,6 @@ public class UserService {
         startingLedger.setName("My ledger");
         startingLedger.setDescription("Main ledger for income and expenses");
         startingLedger.setOwnerId(savedUser.getId());
-        startingLedger.setDefault(true);
         startingLedger = ledgerRepository.save(startingLedger);
 
         UsersLedgers entry = new UsersLedgers();
