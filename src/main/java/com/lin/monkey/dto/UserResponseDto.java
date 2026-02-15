@@ -12,7 +12,8 @@ public record UserResponseDto(
         String email,
         LocalDate birthDate,
         String phoneNumber,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID defaultLedgerId
 ) {
     public static UserResponseDto fromUser(User user) {
         if (user == null) return null;
@@ -23,6 +24,7 @@ public record UserResponseDto(
                 user.getEmail(),
                 user.getBirthDate(),
                 user.getPhoneNumber(),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                user.getDefaultLedgerId());
     }
 }

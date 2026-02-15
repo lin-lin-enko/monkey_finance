@@ -2,12 +2,17 @@ package com.lin.monkey.service;
 
 import com.lin.monkey.dto.UserRequestDto;
 import com.lin.monkey.dto.UserResponseDto;
+import com.lin.monkey.exception.UserNotFoundException;
 import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.User;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.repository.UsersLedgersRepository;
+import com.lin.monkey.security.CustomUserDetails;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.lin.monkey.repository.UserRepository;
@@ -30,14 +35,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final LedgerRepository ledgerRepository;
     private final UsersLedgersRepository usersLedgersRepository;
-    private final EntityManager entityManager;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerRepository = ledgerRepository;
         this.usersLedgersRepository = usersLedgersRepository;
-        this.entityManager = entityManager;
     }
 
     /*
@@ -71,7 +74,6 @@ public class UserService {
         user.setPhoneNumber(dto.getPhoneNumber());
 
         User savedUser = userRepository.save(user);
-        entityManager.refresh(savedUser);
 
         Ledger startingLedger = new Ledger();
         startingLedger.setName("My ledger");
@@ -85,9 +87,28 @@ public class UserService {
         entry.setRole("ADMIN");
         usersLedgersRepository.save(entry);
 
+        savedUser.setDefaultLedgerId(startingLedger.getId());
+
+        User userWithLedger = userRepository.save(savedUser);
+
         // Returns saved object as an answer
         // and turns it into safe dto obj unsing fromUser()
-        return UserResponseDto.fromUser(savedUser);
+        return UserResponseDto.fromUser(userWithLedger);
+    }
+
+    public UserResponseDto changeDefaultLedger(UUID userId, UUID ledgerId) {
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
+
+        User user = findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        String userRole = usersLedgersRepository.findUserRoleInLedger(userId, ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("User doesn't have access to this ledger"));
+
+        user.setDefaultLedgerId(ledgerId);
+        User updatedUser = userRepository.save(user);
+        return UserResponseDto.fromUser(updatedUser);
     }
 
     public Optional<User> findByEmail(String email) {
@@ -112,5 +133,14 @@ public class UserService {
 
     public boolean existsById(UUID id) {
         return userRepository.existsById(id);
+    }
+
+    private UUID getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() instanceof String) {
+            throw new RuntimeException("User is not authenticated");
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        return userDetails.getId();
     }
 }

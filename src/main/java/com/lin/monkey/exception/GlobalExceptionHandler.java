@@ -1,12 +1,15 @@
 package com.lin.monkey.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,13 +53,54 @@ public class GlobalExceptionHandler {
     /* <Map<String, String>> means response body will be
      *  a JSON obj
      */
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(
-            IllegalArgumentException exception
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
+            IllegalArgumentException exception,
+            HttpServletRequest request
     ) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", exception.getMessage());
+        StackTraceElement[] stackTrace = exception.getStackTrace();
+        String sourceLocation = "unknown";
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        if (stackTrace.length > 0) {
+            StackTraceElement top = stackTrace[0];
+            sourceLocation = String.format("%s:%d",
+                    top.getClassName() + "." + top.getMethodName(),
+                    top.getLineNumber());
+        }
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Forbidden",
+                "message", exception.getMessage() != null ? exception.getMessage() : "Illegal argument",
+                "path", request.getRequestURI(),
+                "source", sourceLocation
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
+            AccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+        StackTraceElement[] stackTrace = exception.getStackTrace();
+        String sourceLocation = "unknown";
+
+        if (stackTrace.length > 0) {
+            StackTraceElement top = stackTrace[0];
+            sourceLocation = String.format("%s:%d",
+                    top.getClassName() + "." + top.getMethodName(),
+                    top.getLineNumber());
+        }
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Forbidden",
+                "message", exception.getMessage() != null ? exception.getMessage() : "Access denied",
+                "path", request.getRequestURI(),
+                "source", sourceLocation
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
 }
