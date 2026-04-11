@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260216-020
+      author: lin
+      comment: "Renaming owner_id in ledgers to creator_id, cause there will now be OWNER role in users_ledgers, and creator_id will now store id of the original creator of the table"
+      changes:
+        - dropUniqueConstraint:
+            tableName: ledgers
+            constraintName: ledgers_uk_owner_id_name
+
+        - renameColumn:
+            tableName: ledgers
+            oldColumnName: owner_id
+            newColumnName: creator_id
+
+        - dropForeignKeyConstraint:
+            baseTableName: ledgers
+            constraintName: ledgers_fk_owner_id
+
+        - addForeignKeyConstraint:
+            baseTableName: ledgers
+            baseColumnNames: creator_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: ledgers_fk_creator_id
+            onDelete: CASCADE
+
+        - addUniqueConstraint:
+            tableName: ledgers
+            columnNames: creator_id, name
+            constraintName: ledgers_uk_creator_id_name
+      
+      rollback:
+        - dropUniqueConstraint:
+            tableName: ledgers
+            constraintName: ledgers_uk_creator_id_name
+
+        - dropForeignKeyConstraint:
+            baseTableName: ledgers
+            constraintName: ledgers_fk_creator_id
+
+        - renameColumn:
+            tableName: ledgers
+            oldColumnName: creator_id
+            newColumnName: owner_id
+
+        - addForeignKeyConstraint:
+            baseTableName: ledgers
+            baseColumnNames: owner_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: ledgers_fk_owner_id
+            onDelete: CASCADE
+
+        - addUniqueConstraint:
+            tableName: ledgers
+            columnNames: owner_id, name
+            constraintName: ledgers_uk_owner_id_name

@@ -27,12 +27,12 @@ public class Ledger {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "owner_id", nullable = false, updatable = false)
-    private UUID ownerId;
+    @Column(name = "creator_id", nullable = false, updatable = false)
+    private UUID creatorId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", insertable = false, updatable = false, nullable = false)
-    private User owner;
+    @JoinColumn(name = "creator_id", insertable = false, updatable = false, nullable = false)
+    private User creator;
 
     public UUID getId() {
         return id;
@@ -58,18 +58,18 @@ public class Ledger {
         return createdAt;
     }
 
-    public UUID getOwnerId() {
-        return ownerId;
+    public UUID getCreatorId() {
+        return creatorId;
     }
 
-    public void setOwnerId(UUID ownerId) {
-        this.ownerId = ownerId;
+    public void setCreatorId(UUID creatorId) {
+        this.creatorId = creatorId;
     }
 
-    public User getOwner() {
-        return owner;
+    public User getCreator() {
+        return creator;
     }
-    
+
     // when there are 2 obj with the same id
     @Override
     public boolean equals(Object obj) {

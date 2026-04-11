@@ -1,13 +1,14 @@
 package com.lin.monkey.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.lin.monkey.dto.LedgerAccessDto;
 import com.lin.monkey.dto.LedgerCreationDto;
 import com.lin.monkey.dto.LedgerResponseDto;
 import com.lin.monkey.dto.LedgerUpdateDto;
 import com.lin.monkey.model.Ledger;
+import com.lin.monkey.model.UserRoleInLedger;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.repository.LedgerRepository;
-import com.lin.monkey.repository.UserRepository;
 import com.lin.monkey.repository.UsersLedgersRepository;
 import com.lin.monkey.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
@@ -17,8 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,7 +27,7 @@ public class LedgerService {
     private final LedgerRepository ledgerRepository;
     private final UsersLedgersRepository usersLedgersRepository;
 
-    public LedgerService(LedgerRepository ledgerRepository, UserRepository userRepository, UsersLedgersRepository usersLedgersRepository) {
+    public LedgerService(LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository) {
         this.ledgerRepository = ledgerRepository;
         this.usersLedgersRepository = usersLedgersRepository;
     }
@@ -39,7 +40,7 @@ public class LedgerService {
         Ledger ledger = new Ledger();
         ledger.setName(dto.getName());
         ledger.setDescription(dto.getDescription());
-        ledger.setOwnerId(userId);
+        ledger.setCreatorId(userId);
         try {
             ledger = ledgerRepository.save(ledger);
         } catch (DataIntegrityViolationException e) {
@@ -49,14 +50,20 @@ public class LedgerService {
         UsersLedgers entry = new UsersLedgers();
         entry.setUserId(userId);
         entry.setLedgerId(ledgerId);
-        entry.setRole("ADMIN");
+        entry.setRole(UserRoleInLedger.OWNER);
         usersLedgersRepository.save(entry);
 
         return LedgerResponseDto.fromLedger(ledger);
     }
 
-    public List<Ledger> findAllByOwnerId(UUID ownerId) {
-        return ledgerRepository.findAllByOwnerId(ownerId);
+    public List<Ledger> findAllByCreatorId(UUID creatorId) {
+        return ledgerRepository.findAllByCreatorId(creatorId);
+    }
+
+    public List<Ledger> findAllAccessedByUser(UUID userId) {
+
+        List<UsersLedgers> usersLedgers = usersLedgersRepository.findByUserId(userId);
+        return usersLedgersRepository.findLedgersAccessedByUser(userId);
     }
 
 
@@ -77,6 +84,41 @@ public class LedgerService {
         return LedgerResponseDto.fromLedger(updatedLedger);
     }
 
+    @Transactional
+    public LedgerAccessDto addLedgerAccess(LedgerAccessDto accessDto) {
+        ledgerRepository.findById(accessDto.ledgerId())
+                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
+        canAccessAndMaintain(accessDto.ledgerId());
+        UserRoleInLedger currentUserRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), accessDto.ledgerId())
+                .orElseThrow(() -> new AccessDeniedException("User doesn't have access to this ledger"));
+
+        switch (accessDto.role()) {
+            case UserRoleInLedger.OWNER: {
+                if (!currentUserRole.equals(UserRoleInLedger.OWNER)) {
+                    throw new AccessDeniedException("User must own the ledger to make someone an owner");
+                }
+            }
+            case UserRoleInLedger.ADMIN: {
+                if (!currentUserRole.equals(UserRoleInLedger.OWNER) && !currentUserRole.equals(UserRoleInLedger.ADMIN)) {
+                    throw new AccessDeniedException("User must own the ledger or be an admin to make someone an admin");
+                }
+            }
+            default: {
+                if (!currentUserRole.equals(UserRoleInLedger.OWNER) && !currentUserRole.equals(UserRoleInLedger.ADMIN)) {
+                    throw new AccessDeniedException("User must be an owner or an admin to give someone access to the ledger");
+                }
+            }
+        }
+
+        UsersLedgers usersLedgers = new UsersLedgers();
+        usersLedgers.setRole(accessDto.role());
+        usersLedgers.setLedgerId(accessDto.ledgerId());
+        usersLedgers.setUserId(accessDto.userId());
+
+        UsersLedgers savedAccess = usersLedgersRepository.save(usersLedgers);
+        return new LedgerAccessDto(savedAccess.getUserId(), savedAccess.getLedgerId(), savedAccess.getRole());
+    }
+
 
     private UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -88,16 +130,16 @@ public class LedgerService {
         return userDetails.getId();
     }
 
-    private void canAccess(UUID ledgerId) {
-        usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
-                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-    }
+//    private void canAccess(UUID ledgerId) {
+//        usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+//                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+//    }
 
     private void canAccessAndMaintain(UUID ledgerId) {
-        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+        UserRoleInLedger userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
                 .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-        if (!"ADMIN".equals(userRole)) {
-            throw new AccessDeniedException("Only admins can create, delete or change transations");
+        if (userRole != UserRoleInLedger.ADMIN && userRole != UserRoleInLedger.OWNER) {
+            throw new AccessDeniedException("Only admins and owners can create, delete or change ledgers");
         }
     }
 }

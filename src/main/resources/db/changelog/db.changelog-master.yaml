@@ -37,3 +37,7 @@ databaseChangeLog:
       file: db/changelog/db.changelog-018-adding_transactions_category_id.yaml
   - include:
       file: db/changelog/db.changelog-019-put_default_ledger_id_into_users.yaml
+  - include:
+      file: db/changelog/db.changelog-020-rename_owner_id_in_ledgers.yaml
+  - include:
+      file: db/changelog/db.changelog-021-add_enum_for_user_role_in_users_ledgers.yaml

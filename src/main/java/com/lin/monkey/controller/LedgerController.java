@@ -1,8 +1,8 @@
 package com.lin.monkey.controller;
 
+import com.lin.monkey.dto.LedgerAccessDto;
 import com.lin.monkey.dto.LedgerCreationDto;
 import com.lin.monkey.dto.LedgerResponseDto;
-import com.lin.monkey.dto.LedgerUpdateDto;
 import com.lin.monkey.model.Ledger;
 import com.lin.monkey.security.CustomUserDetails;
 import com.lin.monkey.service.LedgerService;
@@ -40,52 +40,34 @@ public class LedgerController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
-//    @PatchMapping("/{ledgerId}")
-//    public ResponseEntity<LedgerResponseDto> update(
-//            @AuthenticationPrincipal CustomUserDetails userDetails,
-//            @Valid @RequestBody LedgerUpdateDto ledgerUpdateDto,
-//            @PathVariable UUID ledgerId
-//    ) {
-//        if (userDetails == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//        LedgerResponseDto responseDto = ledgerService.update(ledgerUpdateDto, ledgerId);
-//        return ResponseEntity.ok(responseDto);
-//    }
+    @GetMapping("/accessible")
+    public ResponseEntity<List<LedgerResponseDto>> getAllAccessedByUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-    @GetMapping
-    public ResponseEntity<List<LedgerResponseDto>> getAllByOwnerId(
+        List<Ledger> ledgers = ledgerService.findAllAccessedByUser(userDetails.getId());
+        List<LedgerResponseDto> dtoLedgers = ledgers.stream()
+                .map(LedgerResponseDto::fromLedger)
+                .toList();
+
+        return ResponseEntity.ok().body(dtoLedgers);
+
+    }
+
+    @PatchMapping("/{ledgerId}/settings/modifyAccess/addAccess")
+    public ResponseEntity<LedgerAccessDto> addUserRole(
+            @Valid @RequestBody LedgerAccessDto accessDto,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UUID userId = userDetails.getId();
-
-        List<Ledger> ledgers = ledgerService.findAllByOwnerId(userId);
-        List<LedgerResponseDto> dtoLedgers = new ArrayList<>();
-        ledgers.forEach(ledger -> {
-            dtoLedgers.add(LedgerResponseDto.fromLedger(ledger));
-        });
-
-        return ResponseEntity.ok().body(dtoLedgers);
-
+        LedgerAccessDto responseDto = ledgerService.addLedgerAccess(accessDto);
+        return ResponseEntity.ok().body(responseDto);
     }
 
-//    @GetMapping("/default")
-//    public ResponseEntity<LedgerResponseDto> getDefaultLedger(
-//            @AuthenticationPrincipal CustomUserDetails userDetails
-//    ) {
-//        if (userDetails == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//
-//        UUID userId = userDetails.getId();
-//
-//        return ledgerService.findDefaultByOwnerId(userId)
-//                .map(LedgerResponseDto::fromLedger)
-//                .map(ResponseEntity::ok)
-//                .orElseGet(() -> ResponseEntity.notFound().build());
-//    }
+
 }

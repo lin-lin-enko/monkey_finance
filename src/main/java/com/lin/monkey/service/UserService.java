@@ -5,6 +5,7 @@ import com.lin.monkey.dto.UserResponseDto;
 import com.lin.monkey.exception.UserNotFoundException;
 import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.User;
+import com.lin.monkey.model.UserRoleInLedger;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.repository.UsersLedgersRepository;
 import com.lin.monkey.security.CustomUserDetails;
@@ -78,13 +79,13 @@ public class UserService {
         Ledger startingLedger = new Ledger();
         startingLedger.setName("My ledger");
         startingLedger.setDescription("Main ledger for income and expenses");
-        startingLedger.setOwnerId(savedUser.getId());
+        startingLedger.setCreatorId(savedUser.getId());
         startingLedger = ledgerRepository.save(startingLedger);
 
         UsersLedgers entry = new UsersLedgers();
         entry.setUserId(savedUser.getId());
         entry.setLedgerId(startingLedger.getId());
-        entry.setRole("ADMIN");
+        entry.setRole(UserRoleInLedger.ADMIN);
         usersLedgersRepository.save(entry);
 
         savedUser.setDefaultLedgerId(startingLedger.getId());
@@ -103,7 +104,7 @@ public class UserService {
         User user = findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        String userRole = usersLedgersRepository.findUserRoleInLedger(userId, ledgerId)
+        UserRoleInLedger userRole = usersLedgersRepository.findUserRoleInLedger(userId, ledgerId)
                 .orElseThrow(() -> new AccessDeniedException("User doesn't have access to this ledger"));
 
         user.setDefaultLedgerId(ledgerId);

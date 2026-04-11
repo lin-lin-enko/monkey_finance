@@ -1,6 +1,7 @@
 package com.lin.monkey.repository;
 
 import com.lin.monkey.model.Ledger;
+import com.lin.monkey.model.UserRoleInLedger;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.model.UsersLedgersId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,10 +25,10 @@ public interface UsersLedgersRepository extends JpaRepository<UsersLedgers, User
             "WHERE ul.userId = :userId " +
             "AND ul.ledgerId = :ledgerId " +
             "AND ul.role = :role")
-    boolean existsByUserIdAndLedgerIdAndRole(
+    boolean existsUserRoleInLedger(
             @Param("userId") UUID userId,
-            @Param("ledgerId") UUID ledgerId,
-            @Param("role") String role
+            @Param("role") UserRoleInLedger role,
+            @Param("ledgerId") UUID ledgerId
 
     );
 
@@ -35,13 +36,17 @@ public interface UsersLedgersRepository extends JpaRepository<UsersLedgers, User
             "FROM UsersLedgers ul " +
             "WHERE ul.userId = :userId " +
             "AND ul.ledgerId = :ledgerId")
-    Optional<String> findUserRoleInLedger(
+    Optional<UserRoleInLedger> findUserRoleInLedger(
             @Param("userId") UUID userId,
             @Param("ledgerId") UUID ledgerId
     );
+
 
     @Query("SELECT ul " +
             "FROM UsersLedgers ul " +
             "WHERE ul.ledgerId = :ledgerId")
     List<UsersLedgers> findAllUsersAndRolesInLedger(@Param("ledgerId") UUID ledgerId);
+
+    @Query("SELECT l FROM Ledger l WHERE EXISTS (SELECT 1 FROM UsersLedgers ul WHERE ul.ledgerId = l.id AND ul.userId = :userId)")
+    List<Ledger> findLedgersAccessedByUser(@Param("userId") UUID userId);
 }

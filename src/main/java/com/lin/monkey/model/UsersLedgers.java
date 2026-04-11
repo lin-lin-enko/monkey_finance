@@ -19,8 +19,9 @@ public class UsersLedgers {
     @Column(name = "ledger_id")
     private UUID ledgerId;
 
-    @Column(nullable = false, length = 30)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 30)
+    private UserRoleInLedger role;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
@@ -50,11 +51,11 @@ public class UsersLedgers {
         this.userId = userId;
     }
 
-    public String getRole() {
+    public UserRoleInLedger getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(UserRoleInLedger role) {
         this.role = role;
     }
 

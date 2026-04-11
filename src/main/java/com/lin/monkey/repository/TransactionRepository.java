@@ -31,7 +31,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
     @Query("""
                     SELECT t FROM Transaction t
                     JOIN FETCH t.ledger l
-                    WHERE l.ownerId = :userId
+                    WHERE l.creatorId = :userId
             """)
     Page<Transaction> findAllByUserId(@NonNull @Param("userId") UUID userId, Pageable pageable);
 
@@ -47,7 +47,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
     @Query("""
                     SELECT t FROM Transaction t
                     JOIN FETCH t.ledger l
-                    WHERE l.ownerId = :userId
+                    WHERE l.creatorId = :userId
             """)
     List<Transaction> findAllByUserId(@NonNull @Param("userId") UUID userId);
 

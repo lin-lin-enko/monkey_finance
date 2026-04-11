@@ -10,7 +10,7 @@ public record LedgerResponseDto(
         String name,
         String description,
         LocalDateTime createdAt,
-        UUID ownerId
+        UUID creatorId
 ) {
     public static LedgerResponseDto fromLedger(Ledger ledger) {
         if (ledger == null) return null;
@@ -19,7 +19,7 @@ public record LedgerResponseDto(
                 ledger.getName(),
                 ledger.getDescription(),
                 ledger.getCreatedAt(),
-                ledger.getOwnerId()
+                ledger.getCreatorId()
         );
     }
 }

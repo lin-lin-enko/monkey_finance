@@ -12,25 +12,25 @@ import java.util.UUID;
 
 public interface LedgerRepository extends JpaRepository<Ledger, UUID> {
 
-    Optional<Ledger> findByNameAndOwnerId(String name, UUID ownerId);
+    Optional<Ledger> findByNameAndCreatorId(String name, UUID creatorId);
 
-    boolean existsByNameAndOwnerId(String name, UUID ownerId);
+    boolean existsByNameAndCreatorId(String name, UUID creatorId);
 
-    List<Ledger> findAllByOwnerId(UUID ownerId);
+    List<Ledger> findAllByCreatorId(UUID creatorId);
 
-    Optional<Ledger> findByIdAndOwnerId(UUID id, UUID ownerId);
+    Optional<Ledger> findByIdAndCreatorId(UUID id, UUID creatorId);
 
-//    @Query("SELECT l FROM Ledger l WHERE l.ownerId = :ownerId AND l.isDefault = true")
-//    Optional<Ledger> findDefaultByOwnerId(UUID ownerId);
+//    @Query("SELECT l FROM Ledger l WHERE l.creatorId = :creatorId AND l.isDefault = true")
+//    Optional<Ledger> findDefaultByCreatorId(UUID creatorId);
 //
-//    @Query("SELECT l FROM Ledger l WHERE l.ownerId = :ownerId AND l.isDefault = true")
-//    boolean existsDefaultByOwnerId(UUID ownerId);
-//
-//    @Modifying
-//    @Query("UPDATE Ledger l SET l.isDefault = false WHERE l.ownerId = :ownerId")
-//    void resetDefaultFlag(@Param("ownerId") UUID ownerId);
+//    @Query("SELECT l FROM Ledger l WHERE l.creatorId = :creatorId AND l.isDefault = true")
+//    boolean existsDefaultByCreatorId(UUID creatorId);
 //
 //    @Modifying
-//    @Query("UPDATE Ledger l SET l.isDefault = true WHERE l.id = :ledgerId AND ownerId = :ownerId")
-//    void setDefaultById(@Param("ledgerId") UUID ledgerId, @Param("ownerId") UUID ownerId);
+//    @Query("UPDATE Ledger l SET l.isDefault = false WHERE l.creatorId = :creatorId")
+//    void resetDefaultFlag(@Param("creatorId") UUID creatorId);
+//
+//    @Modifying
+//    @Query("UPDATE Ledger l SET l.isDefault = true WHERE l.id = :ledgerId AND creatorId = :creatorId")
+//    void setDefaultById(@Param("ledgerId") UUID ledgerId, @Param("creatorId") UUID creatorId);
 }

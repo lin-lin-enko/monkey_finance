@@ -169,9 +169,10 @@ public class TransactionService {
     }
 
     private void canAccessAndMaintain(UUID ledgerId) {
-        String userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+        UserRoleInLedger userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
                 .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-        if (!"ADMIN".equals(userRole)) {
+        System.out.println("ROLE                             " + userRole);
+        if (!UserRoleInLedger.ADMIN.equals(userRole)) {
             throw new AccessDeniedException("Only admins can create, delete or change transations");
         }
     }

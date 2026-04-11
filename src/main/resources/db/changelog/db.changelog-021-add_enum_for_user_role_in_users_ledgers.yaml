@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260216-021
+      author: lin
+      comment: "Adding enum for user's role in a db to omit typos when assining a role"
+      preConditions:
+        - onFail: MARK_RAN
+          sqlCheck:
+            expectedResult: 0
+            sql: |
+              SELECT COUNT(*)
+              FROM users_ledgers
+              WHERE TRIM(UPPER(role)) NOT IN ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER')
+              AND role IS NOT NULL;
+
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TYPE user_role_in_ledger AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE users_ledgers
+              ALTER COLUMN role TYPE user_role_in_ledger
+              USING (TRIM(UPPER(role))::user_role_in_ledger);
+
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE users_ledgers
+              ALTER COLUMN role TYPE varchar(30)
+              USING role::text;
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              DROP TYPE IF EXISTS user_role_in_ledger
