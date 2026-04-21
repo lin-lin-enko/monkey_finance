@@ -11,7 +11,7 @@ public record LedgerAccessDto(
 
         @NotNull(message = "Ledger ID is required")
         UUID ledgerId,
-
+        
         @NotNull(message = "User's role is required")
         UserRoleInLedger role
 ) {

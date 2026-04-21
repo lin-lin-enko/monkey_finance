@@ -9,6 +9,7 @@ import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.UserRoleInLedger;
 import com.lin.monkey.model.UsersLedgers;
 import com.lin.monkey.repository.LedgerRepository;
+import com.lin.monkey.repository.UserRepository;
 import com.lin.monkey.repository.UsersLedgersRepository;
 import com.lin.monkey.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
@@ -18,7 +19,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,10 +26,12 @@ import java.util.UUID;
 public class LedgerService {
     private final LedgerRepository ledgerRepository;
     private final UsersLedgersRepository usersLedgersRepository;
+    private final UserRepository userRepository;
 
-    public LedgerService(LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository) {
+    public LedgerService(LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository, UserRepository userRepository) {
         this.ledgerRepository = ledgerRepository;
         this.usersLedgersRepository = usersLedgersRepository;
+        this.userRepository = userRepository;
     }
 
 
@@ -72,7 +74,14 @@ public class LedgerService {
     public LedgerResponseDto update(LedgerUpdateDto dto, UUID ledgerId) {
         Ledger ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
-        canAccessAndMaintain(ledgerId);
+
+        UserRoleInLedger currentUserRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+
+        if (currentUserRole != UserRoleInLedger.ADMIN && currentUserRole != UserRoleInLedger.OWNER) {
+            throw new AccessDeniedException("Only admins and owners can create, delete or make changes in/of the ledgers");
+        }
+
         if (dto.getName() != null && !dto.getName().isBlank()) {
             ledger.setName(dto.getName());
         }
@@ -85,30 +94,12 @@ public class LedgerService {
     }
 
     @Transactional
-    public LedgerAccessDto addLedgerAccess(LedgerAccessDto accessDto) {
-        ledgerRepository.findById(accessDto.ledgerId())
-                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
-        canAccessAndMaintain(accessDto.ledgerId());
-        UserRoleInLedger currentUserRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), accessDto.ledgerId())
-                .orElseThrow(() -> new AccessDeniedException("User doesn't have access to this ledger"));
+    public LedgerAccessDto grantAccess(LedgerAccessDto accessDto) {
+        checkAccessModificationPermissions(accessDto.ledgerId(), accessDto.userId(), accessDto.role());
 
-        switch (accessDto.role()) {
-            case UserRoleInLedger.OWNER: {
-                if (!currentUserRole.equals(UserRoleInLedger.OWNER)) {
-                    throw new AccessDeniedException("User must own the ledger to make someone an owner");
-                }
-            }
-            case UserRoleInLedger.ADMIN: {
-                if (!currentUserRole.equals(UserRoleInLedger.OWNER) && !currentUserRole.equals(UserRoleInLedger.ADMIN)) {
-                    throw new AccessDeniedException("User must own the ledger or be an admin to make someone an admin");
-                }
-            }
-            default: {
-                if (!currentUserRole.equals(UserRoleInLedger.OWNER) && !currentUserRole.equals(UserRoleInLedger.ADMIN)) {
-                    throw new AccessDeniedException("User must be an owner or an admin to give someone access to the ledger");
-                }
-            }
-        }
+        if (usersLedgersRepository.existsByUserIdAndLedgerId(accessDto.userId(), accessDto.ledgerId()))
+            throw new IllegalStateException("Access for this user already exists");
+
 
         UsersLedgers usersLedgers = new UsersLedgers();
         usersLedgers.setRole(accessDto.role());
@@ -117,6 +108,49 @@ public class LedgerService {
 
         UsersLedgers savedAccess = usersLedgersRepository.save(usersLedgers);
         return new LedgerAccessDto(savedAccess.getUserId(), savedAccess.getLedgerId(), savedAccess.getRole());
+    }
+
+    @Transactional
+    public LedgerAccessDto modifyAccess(LedgerAccessDto accessDto) {
+        checkAccessModificationPermissions(accessDto.ledgerId(), accessDto.userId(), accessDto.role());
+
+        if (!usersLedgersRepository.existsByUserIdAndLedgerId(accessDto.userId(), accessDto.ledgerId()))
+            throw new IllegalStateException("Access for this user doesn't exist yet");
+
+        UsersLedgers usersLedgers = new UsersLedgers();
+        usersLedgers.setRole(accessDto.role());
+        usersLedgers.setLedgerId(accessDto.ledgerId());
+        usersLedgers.setUserId(accessDto.userId());
+
+        UsersLedgers savedAccess = usersLedgersRepository.save(usersLedgers);
+        return new LedgerAccessDto(savedAccess.getUserId(), savedAccess.getLedgerId(), savedAccess.getRole());
+    }
+
+    @Transactional
+    public UUID revokeAccess(UUID ledgerId, UUID targetUserId) {
+        ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
+
+        UserRoleInLedger currentUserRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
+
+        if (currentUserRole != UserRoleInLedger.ADMIN && currentUserRole != UserRoleInLedger.OWNER) {
+            throw new AccessDeniedException("Only admins and owners can create, delete or make changes in/of the ledgers");
+        }
+
+        userRepository.findById(targetUserId).orElseThrow(() -> new IllegalArgumentException("Target user not found"));
+
+        UserRoleInLedger targetUserRole = usersLedgersRepository.findUserRoleInLedger(targetUserId, ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("Access for this user doesn't exist yet"));
+
+        if (targetUserRole == UserRoleInLedger.OWNER && currentUserRole != UserRoleInLedger.OWNER)
+            throw new AccessDeniedException("Only ledger owner can grant and/or revoke ownership");
+
+        UsersLedgers usersLedgers = new UsersLedgers();
+
+
+        usersLedgersRepository.deleteByUserIdAndLedgerId(targetUserId, ledgerId);
+        return targetUserId;
     }
 
 
@@ -130,17 +164,22 @@ public class LedgerService {
         return userDetails.getId();
     }
 
-//    private void canAccess(UUID ledgerId) {
-//        usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
-//                .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-//    }
+    private void checkAccessModificationPermissions(UUID ledgerId, UUID targetUsertId, UserRoleInLedger targetRole) {
+        ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("Ledger not found"));
 
-    private void canAccessAndMaintain(UUID ledgerId) {
-        UserRoleInLedger userRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
+        userRepository.findById(targetUsertId)
+                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
+
+        UserRoleInLedger currentUserRole = usersLedgersRepository.findUserRoleInLedger(getCurrentUserId(), ledgerId)
                 .orElseThrow(() -> new AccessDeniedException("You don't have access to this ledger"));
-        if (userRole != UserRoleInLedger.ADMIN && userRole != UserRoleInLedger.OWNER) {
-            throw new AccessDeniedException("Only admins and owners can create, delete or change ledgers");
+
+        if (currentUserRole != UserRoleInLedger.ADMIN && currentUserRole != UserRoleInLedger.OWNER) {
+            throw new AccessDeniedException("Only admins and owners can create, delete or make changes in/of the ledgers");
         }
+
+        if (targetRole == UserRoleInLedger.OWNER && currentUserRole != UserRoleInLedger.OWNER)
+            throw new AccessDeniedException("Only ledger owner can grant and/or revoke ownership");
     }
 }
 

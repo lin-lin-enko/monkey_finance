@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,33 +41,46 @@ public class LedgerController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
-    @GetMapping("/accessible")
-    public ResponseEntity<List<LedgerResponseDto>> getAllAccessedByUser(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        List<Ledger> ledgers = ledgerService.findAllAccessedByUser(userDetails.getId());
-        List<LedgerResponseDto> dtoLedgers = ledgers.stream()
-                .map(LedgerResponseDto::fromLedger)
-                .toList();
-
-        return ResponseEntity.ok().body(dtoLedgers);
-
-    }
-
-    @PatchMapping("/{ledgerId}/settings/modifyAccess/addAccess")
-    public ResponseEntity<LedgerAccessDto> addUserRole(
-            @Valid @RequestBody LedgerAccessDto accessDto,
+    @PostMapping("/{ledgerId}/access")
+    public ResponseEntity<LedgerAccessDto> grantAccess(
+            @Valid @RequestBody LedgerAccessDto requestDto,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        LedgerAccessDto responseDto = ledgerService.addLedgerAccess(accessDto);
+        System.out.println(requestDto);
+
+        LedgerAccessDto responseDto = ledgerService.grantAccess(requestDto);
         return ResponseEntity.ok().body(responseDto);
+    }
+
+    @PatchMapping("/{ledgerId}/access")
+    public ResponseEntity<LedgerAccessDto> modifyAccess(
+            @Valid @RequestBody LedgerAccessDto requestDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        LedgerAccessDto responseDto = ledgerService.modifyAccess(requestDto);
+        return ResponseEntity.ok().body(responseDto);
+    }
+
+    @DeleteMapping("/{ledgerId}/access/{userId}")
+    public ResponseEntity<UUID> revokeAccess(
+            @PathVariable UUID userId,
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UUID deletedUserId = ledgerService.revokeAccess(ledgerId, userId);
+        return ResponseEntity.ok().body(deletedUserId);
     }
 
 

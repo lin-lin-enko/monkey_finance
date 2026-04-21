@@ -20,6 +20,8 @@ public interface UsersLedgersRepository extends JpaRepository<UsersLedgers, User
 
     List<UsersLedgers> findByLedgerId(UUID ledgerId);
 
+    void deleteByUserIdAndLedgerId(UUID userId, UUID ledgerId);
+
     @Query("SELECT CASE WHEN COUNT (ul) > 0 THEN true ELSE false END " +
             "FROM UsersLedgers ul " +
             "WHERE ul.userId = :userId " +

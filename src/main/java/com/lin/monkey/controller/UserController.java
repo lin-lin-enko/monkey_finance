@@ -1,10 +1,13 @@
 package com.lin.monkey.controller;
 
 import com.lin.monkey.dto.ChangeDefaultLedgerDto;
+import com.lin.monkey.dto.LedgerResponseDto;
 import com.lin.monkey.dto.UserResponseDto;
 import com.lin.monkey.exception.UserNotFoundException;
+import com.lin.monkey.model.Ledger;
 import com.lin.monkey.model.User;
 import com.lin.monkey.security.CustomUserDetails;
+import com.lin.monkey.service.LedgerService;
 import com.lin.monkey.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,9 +23,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final LedgerService ledgerService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, LedgerService ledgerService) {
         this.userService = userService;
+        this.ledgerService = ledgerService;
     }
 
     @GetMapping("/me")
@@ -45,7 +51,7 @@ public class UserController {
     @PatchMapping("/me/default-ledger")
     public ResponseEntity<UserResponseDto> changeDefaultLedger(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody @Valid ChangeDefaultLedgerDto changeDefaultLedgerDto
+            @Valid @RequestBody ChangeDefaultLedgerDto changeDefaultLedgerDto
     ) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -54,5 +60,21 @@ public class UserController {
         UserResponseDto userResponseDto = userService.changeDefaultLedger(userDetails.getId(), changeDefaultLedgerDto.ledgerId());
 
         return ResponseEntity.ok(userResponseDto);
+    }
+
+    @GetMapping("/me/ledgers")
+    public ResponseEntity<List<LedgerResponseDto>> getAllAccessedByUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<Ledger> ledgers = ledgerService.findAllAccessedByUser(userDetails.getId());
+        List<LedgerResponseDto> dtoLedgers = ledgers.stream()
+                .map(LedgerResponseDto::fromLedger)
+                .toList();
+
+        return ResponseEntity.ok().body(dtoLedgers);
+
     }
 }
