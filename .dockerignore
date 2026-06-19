@@ -1,0 +1,11 @@
+.git
+.gitignore
+README.md
+*.md
+build
+.gradle
+src/test
+src/main/resources/application-local.yml
+.dockerignore
+Dockerfile*
+docker-compose*

@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create_table_ledger_members
+      author: alina
+      changes:
+        - createTable:
+            schemaName: dev
+            tableName: ledger_members
+            columns:
+              - column:
+                  name: ledger_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_ledger_members_ledger
+                    referencedSchemaName: dev
+                    referencedTableName: ledgers
+                    referencedColumnNames: id
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_ledger_members_member
+                    referencedSchemaName: dev
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    nullable: false
+              - column:
+                  name: is_default_ledger
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: access_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: joined_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            schemaName: dev
+            tableName: ledger_members
+            columnNames: ledger_id, user_id
+            constraintName: pk_ledger_members
+
+        - createIndex:
+            schemaName: dev
+            tableName: ledger_members
+            indexName: idx_ledger_members_user
+            columns:
+              - column: {name: user_id}

@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-table-ledgers
+      author: alina
+      changes:
+        - createTable:
+            schemaName: dev
+            tableName: ledgers
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: "gen_random_uuid()"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(50)
+                  constraints:
+                      nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: creator_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_ledgers_creator
+                    referencedSchemaName: dev
+                    referencedTableName: users
+                    referencedColumnNames: id
+

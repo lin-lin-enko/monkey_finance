@@ -1,0 +1,50 @@
+# services are containers
+services:
+  app:
+    # the app container isn't based on image like postres for
+    # example. It's based on a current build
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    # the app won't start until everything below starts
+    depends_on:
+      db:
+        condition: service_healthy
+      # check if migration completed before starting the app
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: rebuild
+          path: src
+  db:
+    image: 'postgres:latest'
+    # .env variables
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./dev-schema-init.sql:/docker-entrypoint-initdb.d/dev-schema-init.sql
+      - monkey-finance-db-volume:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'monkey_finance_admin', '-d', 'monkey_finance_dev']
+      # how often docker makes checks
+      interval: 10s
+      # how long to wait command response before thinking it's failed
+      timeout: 5s
+      # how much times to repeat checks before container is unhealthy
+      retries: 5
+      # how much time to give service so it can start
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  monkey-finance-db-volume:
