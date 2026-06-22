@@ -18,7 +18,7 @@ databaseChangeLog:
                   name: username
                   type: varchar(20)
                   constraints:
-                    nullable:
+                    nullable: false
                     unique: true
               - column:
                   name: email
@@ -41,6 +41,18 @@ databaseChangeLog:
                   type: date
               - column:
                   name: created_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_updated_at
                   type: timestamptz
                   defaultValueComputed: NOW()
                   constraints:

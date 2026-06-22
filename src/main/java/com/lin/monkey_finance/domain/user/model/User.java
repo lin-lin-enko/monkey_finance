@@ -1,11 +1,11 @@
 package com.lin.monkey_finance.domain.user.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.Generated;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -13,8 +13,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "dev")
+@EntityListeners(AuditingEntityListener.class)
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)
     private UUID id;
 
@@ -37,20 +39,27 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Generated
+    @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
+    @Column(name = "password_updated_at", nullable = false)
+    private OffsetDateTime passwordUpdatedAt;
 
     public User(){
     }
 
     public User(String username, String email, String password, String name, LocalDate dateOfBirth){
-        this.id = UUID.randomUUID();
         this.username = username;
         this.email = email;
         this.password = password;
         this.name = name;
         this.dateOfBirth = dateOfBirth;
+        this.passwordUpdatedAt = OffsetDateTime.now();
     }
 
     public UUID getId(){
@@ -99,5 +108,17 @@ public class User {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public OffsetDateTime getPasswordUpdatedAt() {
+        return passwordUpdatedAt;
+    }
+
+    public void setPasswordUpdatedAt(OffsetDateTime passwordUpdatedAt) {
+        this.passwordUpdatedAt = passwordUpdatedAt;
     }
 }
