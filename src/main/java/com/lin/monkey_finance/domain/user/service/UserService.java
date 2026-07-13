@@ -1,5 +1,5 @@
 package com.lin.monkey_finance.domain.user.service;
-
+import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.model.User;
@@ -13,10 +13,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LedgerService ledgerService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerService ledgerService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.ledgerService = ledgerService;
     }
 
     @Transactional
@@ -40,6 +42,8 @@ public class UserService {
         );
 
         User savedUser = userRepository.save(user);
+
+        ledgerService.createDefaultLedger(savedUser.getId(), savedUser.getUsername());
 
         return new UserResponseDto(
                 savedUser.getId(),

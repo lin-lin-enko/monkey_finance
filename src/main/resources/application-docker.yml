@@ -4,7 +4,7 @@ spring:
       enabled: false
 
   datasource:
-    url: jdbc:postgresql://db:5432/monkey_finance_dev?currentSchema=dev
+    url: jdbc:postgresql://db:5432/monkey_finance?currentSchema=dev
     username: monkey_finance_admin
     password: password
   jpa:
