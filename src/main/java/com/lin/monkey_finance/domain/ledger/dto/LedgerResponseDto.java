@@ -9,6 +9,5 @@ public record LedgerResponseDto(
     String name,
     String description,
     UUID creatorId,
-    OffsetDateTime createdAt,
-    List<LedgerMemberResponseDto> members
+    OffsetDateTime createdAt
 ){}

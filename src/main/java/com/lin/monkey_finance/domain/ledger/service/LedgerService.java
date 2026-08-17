@@ -1,5 +1,6 @@
 package com.lin.monkey_finance.domain.ledger.service;
 
+import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerResponseDto;
 import com.lin.monkey_finance.domain.ledger.model.AccessType;
@@ -9,8 +10,11 @@ import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +30,7 @@ public class LedgerService {
     }
 
     @Transactional
-    public LedgerResponseDto create(String name, String description, UUID creatorId, String username, boolean isDefaultLedger){
+    public LedgerDetailedResponseDto create(String name, String description, UUID creatorId, String username, boolean isDefaultLedger){
         Ledger ledger = new Ledger(name, description, creatorId);
         Ledger savedLedger = ledgerRepository.save(ledger);
 
@@ -45,7 +49,7 @@ public class LedgerService {
                 savedLedgerMember.getJoinedAt()
         );
 
-        return new LedgerResponseDto(
+        return new LedgerDetailedResponseDto(
                 savedLedger.getId(),
                 savedLedger.getName(),
                 savedLedger.getDescription(),
@@ -61,5 +65,21 @@ public class LedgerService {
         creatorId,
         username,
         true);
+    }
+
+    @Transactional
+    public List<LedgerResponseDto> getCurrentUserLedgers(UUID userId){
+        List<Ledger> ledgers = ledgerRepository.findAllByUserId(userId);
+
+        List<LedgerResponseDto> ledgerResponseDtoList = new ArrayList<>();
+        ledgers.forEach(ledger ->
+                ledgerResponseDtoList.add(new LedgerResponseDto(
+                    ledger.getId(),
+                    ledger.getName(),
+                    ledger.getDescription(),
+                    ledger.getCreatorId(),
+                    ledger.getCreatedAt()
+            )));
+        return ledgerResponseDtoList;
     }
 }

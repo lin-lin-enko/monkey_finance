@@ -1,0 +1,17 @@
+package com.lin.monkey_finance.domain.ledger.dto;
+
+import com.lin.monkey_finance.domain.ledger.model.AccessType;
+import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+
+public record LedgerDetailedResponseDto(
+        UUID id,
+        String name,
+        String description,
+        UUID creatorId,
+        OffsetDateTime createdAt,
+        List<LedgerMemberResponseDto> members
+){}
