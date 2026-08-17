@@ -1,5 +1,7 @@
 package com.lin.monkey_finance.domain.user.controller;
 
+import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
+import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.service.UserService;
@@ -27,5 +29,13 @@ public class UserController {
         UserResponseDto userResponseDto = userService.register(userRegisterDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDto);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDto> login(
+            @RequestBody @Valid UserLoginDto userLoginDto
+    ){
+        AuthResponseDto authResponseDto = userService.login(userLoginDto);
+        return ResponseEntity.status(HttpStatus.OK).body(authResponseDto);
     }
 }
