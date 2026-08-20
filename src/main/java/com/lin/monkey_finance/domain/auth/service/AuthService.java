@@ -1,39 +1,52 @@
-package com.lin.monkey_finance.domain.user.service;
+package com.lin.monkey_finance.domain.auth.service;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.model.User;
+import com.lin.monkey_finance.domain.user.model.UserStatus;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
+import com.lin.monkey_finance.domain.user.service.EmailService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
-public class UserService {
+public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final LedgerService ledgerService;
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
     private final EntityManager entityManager;
+    private final EmailService emailService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerService ledgerService, JwtEncoder jwtEncoder, EntityManager entityManager){
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            LedgerService ledgerService,
+            JwtEncoder jwtEncoder,
+            JwtDecoder jwtDecoder,
+            EntityManager entityManager,
+            EmailService emailService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerService = ledgerService;
         this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
         this.entityManager = entityManager;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -53,7 +66,8 @@ public class UserService {
                 userRegisterDto.email(),
                 encodedPass,
                 userRegisterDto.name(),
-                userRegisterDto.dateOfBirth()
+                userRegisterDto.dateOfBirth(),
+                UserStatus.PENDING
         );
 
         User savedUser = userRepository.save(user);
@@ -61,6 +75,9 @@ public class UserService {
         entityManager.refresh(savedUser);
 
         ledgerService.createDefaultLedger(savedUser.getId());
+
+        String token = generateEmailConfirmationToken(savedUser.getId());
+        emailService.sendConfirmationEmail(savedUser.getEmail(), token);
 
         return new UserResponseDto(
                 savedUser.getId(),
@@ -72,6 +89,50 @@ public class UserService {
         );
     }
 
+    public String generateEmailConfirmationToken(UUID userId){
+        Instant now = Instant.now();
+        JwtClaimsSet claimsSet = JwtClaimsSet.builder()
+                .issuer("monkey-finance")
+                .issuedAt(now)
+                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
+                .subject(userId.toString())
+                .claim("purpose", "EMAIL_CONFIRMATION")
+                .build();
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claimsSet)).getTokenValue();
+    }
+
+    @Transactional
+    public void confirmEmailAddress(String token) {
+        Jwt jwt;
+        try {
+            jwt = jwtDecoder.decode(token);
+        } catch (JwtException e){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Confirmation link has expired or is invalid"
+            );
+        }
+
+        if (!"EMAIL_CONFIRMATION".equals(jwt.getClaimAsString("purpose"))){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid token type"
+            );
+        }
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
     @Transactional
     public AuthResponseDto login(UserLoginDto userLoginDto){
         User user = userRepository.findByEmail(userLoginDto.email())
@@ -81,6 +142,21 @@ public class UserService {
             throw new IllegalArgumentException("Wrong email or password");
         }
 
+        switch (user.getStatus()){
+            case BLOCKED -> throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Your account has been blocked");
+            case PENDING -> {
+                String token = generateEmailConfirmationToken(user.getId());
+                emailService.sendConfirmationEmail(user.getEmail(), token);
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Your email wasn't yet confirmed. The confirmation link was sent to you again"
+                );
+            }
+        }
+
+
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("monkey-finance")
@@ -88,6 +164,7 @@ public class UserService {
                 .expiresAt(now.plus(24, ChronoUnit.HOURS))
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
+                .claim("purpose", "LOGIN")
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();

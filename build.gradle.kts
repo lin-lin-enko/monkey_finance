@@ -50,7 +50,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
-    implementation("de.codecentric:spring-boot-admin-starter-server")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("io.sentry:sentry-spring-boot-4-starter")
     implementation("net.ttddyy.observation:datasource-micrometer-opentelemetry")

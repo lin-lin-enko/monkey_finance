@@ -47,15 +47,20 @@ public class User {
     @Column(name = "password_updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime passwordUpdatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private UserStatus status = UserStatus.PENDING;
+
     public User(){
     }
 
-    public User(String username, String email, String password, String name, LocalDate dateOfBirth){
+    public User(String username, String email, String password, String name, LocalDate dateOfBirth, UserStatus status){
         this.username = username;
         this.email = email;
         this.password = password;
         this.name = name;
         this.dateOfBirth = dateOfBirth;
+        this.status = status;
     }
 
     public UUID getId(){
@@ -112,5 +117,13 @@ public class User {
 
     public OffsetDateTime getPasswordUpdatedAt() {
         return passwordUpdatedAt;
+    }
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
     }
 }

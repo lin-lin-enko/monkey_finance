@@ -12,9 +12,19 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     # the app won't start until everything below starts
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       # check if migration completed before starting the app
     restart: unless-stopped
@@ -46,5 +56,20 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  redis:
+    image: 'redis:latest'
+    container_name: monkey_finance_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - monkey-finance-redis-volume:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   monkey-finance-db-volume:
+  monkey-finance-redis-volume:

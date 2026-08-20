@@ -1,32 +1,30 @@
-package com.lin.monkey_finance.domain.user.controller;
+package com.lin.monkey_finance.domain.auth.controller;
 
+import com.lin.monkey_finance.domain.auth.service.AuthService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
-import com.lin.monkey_finance.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/users")
-public class UserController {
-    private final UserService userService;
+@RequestMapping("/api/v1/auth")
+public class AuthController {
 
-    public UserController(UserService userService){
-        this.userService = userService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService){
+        this.authService = authService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto> register(
             @RequestBody @Valid UserRegisterDto userRegisterDto
-            ){
-        UserResponseDto userResponseDto = userService.register(userRegisterDto);
+    ){
+        UserResponseDto userResponseDto = authService.register(userRegisterDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDto);
     }
@@ -35,7 +33,16 @@ public class UserController {
     public ResponseEntity<AuthResponseDto> login(
             @RequestBody @Valid UserLoginDto userLoginDto
     ){
-        AuthResponseDto authResponseDto = userService.login(userLoginDto);
+        AuthResponseDto authResponseDto = authService.login(userLoginDto);
         return ResponseEntity.status(HttpStatus.OK).body(authResponseDto);
     }
+
+    @GetMapping("/confirm")
+    public ResponseEntity<String> activateUser(
+            @RequestParam String token
+    ){
+        authService.confirmEmailAddress(token);
+        return ResponseEntity.ok("Successfully activated");
+    }
 }
+

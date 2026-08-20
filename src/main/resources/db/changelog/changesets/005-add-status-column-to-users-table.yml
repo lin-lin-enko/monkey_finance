@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-status-column-to-users-table
+      author: alina
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: users
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE dev.users
+              ADD CONSTRAINT check_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED'));
+              
+              
+          
