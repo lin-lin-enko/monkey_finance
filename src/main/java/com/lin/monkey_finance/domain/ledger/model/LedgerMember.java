@@ -2,6 +2,7 @@ package com.lin.monkey_finance.domain.ledger.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -13,6 +14,9 @@ public class LedgerMember {
     @EmbeddedId
     private LedgerMemberId id;
 
+    @Column(nullable = false)
+    private String username;
+
     @Column(name = "is_default_ledger", nullable = false)
     private boolean isDefaultLedger = false;
 
@@ -20,8 +24,8 @@ public class LedgerMember {
     @Column(name = "access_type", nullable = false, length = 20)
     private AccessType accessType;
 
-    @Generated
-    @Column(name = "joined_at", nullable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "joined_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime joinedAt;
 
     @Enumerated(EnumType.STRING)
@@ -30,8 +34,9 @@ public class LedgerMember {
 
     public LedgerMember(){}
 
-    public LedgerMember(UUID ledgerId, UUID userId, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
+    public LedgerMember(UUID ledgerId, UUID userId, String username, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
         this.id = new LedgerMemberId(ledgerId, userId);
+        this.username = username;
         this.isDefaultLedger = isDefaultLedger;
         this.accessType = accessType;
         this.status = status;
@@ -39,6 +44,14 @@ public class LedgerMember {
 
     public LedgerMemberId getId() {
         return id;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public boolean isDefaultLedger() {

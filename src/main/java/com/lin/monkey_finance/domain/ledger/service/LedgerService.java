@@ -2,6 +2,7 @@ package com.lin.monkey_finance.domain.ledger.service;
 
 import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerResponseDto;
 import com.lin.monkey_finance.domain.ledger.model.AccessType;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
@@ -9,9 +10,10 @@ import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
 import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import com.lin.monkey_finance.domain.user.model.User;
+import com.lin.monkey_finance.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,31 +25,83 @@ public class LedgerService {
 
     private final LedgerRepository ledgerRepository;
     private final LedgerMemberRepository ledgerMemberRepository;
+    private final UserRepository userRepository;
+    private final EntityManager entityManager;
 
-    public LedgerService(LedgerRepository ledgerRepository, LedgerMemberRepository ledgerMemberRepository){
+    public LedgerService(LedgerRepository ledgerRepository, LedgerMemberRepository ledgerMemberRepository, UserRepository userRepository, EntityManager entityManager){
         this.ledgerRepository = ledgerRepository;
         this.ledgerMemberRepository = ledgerMemberRepository;
+        this.userRepository = userRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional
-    public LedgerDetailedResponseDto create(String name, String description, UUID creatorId, String username, boolean isDefaultLedger){
-        Ledger ledger = new Ledger(name, description, creatorId);
+    public void createDefaultLedger(UUID creatorId){
+        create(
+                new LedgerRequestDto(
+                        "My ledger",
+                        "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you"
+                ), creatorId);
+    }
+
+    @Transactional
+    public List<LedgerResponseDto> getCurrentUserLedgers(UUID userId){
+        List<Ledger> ledgers = ledgerRepository.findAllByUserId(userId);
+        List<LedgerResponseDto> ledgerResponseDtoList = new ArrayList<>();
+
+        if (!ledgers.isEmpty()){
+            ledgers.forEach(ledger ->
+                    ledgerResponseDtoList.add(new LedgerResponseDto(
+                            ledger.getId(),
+                            ledger.getName(),
+                            ledger.getDescription(),
+                            ledger.getCreatorId(),
+                            ledger.getCreatedAt()
+                    )));
+        }
+
+        return ledgerResponseDtoList;
+    }
+
+    @Transactional
+    public LedgerDetailedResponseDto getLedgerById(UUID ledgerId){
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new IllegalArgumentException("No ledger with such id"));
+        List<LedgerMember> ledgerMembers = ledgerMemberRepository.findAllById_LedgerId(ledgerId);
+        List<LedgerMemberResponseDto> ledgerMemberResponseDtoList = ledgerMembers.stream().map(ledgerMember ->
+                new LedgerMemberResponseDto(
+                        ledgerMember.getId().getUserId(),
+                        ledgerMember.getUsername(),
+                        ledgerMember.getAccessType(),
+                        ledgerMember.getStatus(),
+                        ledgerMember.getJoinedAt()
+                )).toList();
+        return new LedgerDetailedResponseDto(
+                ledger.getId(),
+                ledger.getName(),
+                ledger.getDescription(),
+                ledger.getCreatorId(),
+                ledger.getCreatedAt(),
+                ledgerMemberResponseDtoList
+        );
+    }
+
+    @Transactional
+    public LedgerDetailedResponseDto create(LedgerRequestDto ledgerRequestDto, UUID userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No user with such id"));
+
+        List<LedgerMember> userMemberships = ledgerMemberRepository.findAllById_UserId(userId);
+
+        Ledger ledger = new Ledger(ledgerRequestDto.name(), ledgerRequestDto.description(), userId);
         Ledger savedLedger = ledgerRepository.save(ledger);
 
-        LedgerMember ledgerMember = new LedgerMember(
-                savedLedger.getId(),
-                creatorId,
-                isDefaultLedger,
-                AccessType.OWNER,
-                MemberStatus.ACTIVE);
+        LedgerMember ledgerMember = new LedgerMember(savedLedger.getId(), savedLedger.getCreatorId(), user.getUsername(), userMemberships.isEmpty(), AccessType.OWNER, MemberStatus.ACTIVE);
         LedgerMember savedLedgerMember = ledgerMemberRepository.save(ledgerMember);
-        LedgerMemberResponseDto ledgerMemberResponseDto = new LedgerMemberResponseDto(
-                creatorId,
-                username,
-                savedLedgerMember.getAccessType(),
-                savedLedgerMember.getStatus(),
-                savedLedgerMember.getJoinedAt()
-        );
+
+        entityManager.flush();
+        entityManager.refresh(savedLedger);
+        entityManager.refresh(savedLedgerMember);
 
         return new LedgerDetailedResponseDto(
                 savedLedger.getId(),
@@ -55,31 +109,13 @@ public class LedgerService {
                 savedLedger.getDescription(),
                 savedLedger.getCreatorId(),
                 savedLedger.getCreatedAt(),
-                List.of(ledgerMemberResponseDto));
-    }
-
-    @Transactional
-    public void createDefaultLedger(UUID creatorId, String username){
-        create("My ledger",
-                "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you",
-        creatorId,
-        username,
-        true);
-    }
-
-    @Transactional
-    public List<LedgerResponseDto> getCurrentUserLedgers(UUID userId){
-        List<Ledger> ledgers = ledgerRepository.findAllByUserId(userId);
-
-        List<LedgerResponseDto> ledgerResponseDtoList = new ArrayList<>();
-        ledgers.forEach(ledger ->
-                ledgerResponseDtoList.add(new LedgerResponseDto(
-                    ledger.getId(),
-                    ledger.getName(),
-                    ledger.getDescription(),
-                    ledger.getCreatorId(),
-                    ledger.getCreatedAt()
-            )));
-        return ledgerResponseDtoList;
+                List.of(new LedgerMemberResponseDto(
+                        savedLedgerMember.getId().getUserId(),
+                        savedLedgerMember.getUsername(),
+                        savedLedgerMember.getAccessType(),
+                        savedLedgerMember.getStatus(),
+                        savedLedgerMember.getJoinedAt()
+                ))
+        );
     }
 }

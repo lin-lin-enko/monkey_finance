@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -23,8 +24,8 @@ public class Ledger {
 
     private String description;
 
-    @Generated
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "creator_id", nullable = false)

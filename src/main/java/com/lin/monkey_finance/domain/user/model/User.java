@@ -3,17 +3,13 @@ package com.lin.monkey_finance.domain.user.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.Generated;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import org.hibernate.generator.EventType;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "dev")
-@EntityListeners(AuditingEntityListener.class)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -39,15 +35,16 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @CreatedDate
-    @Column(name = "created_at", updatable = false, nullable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Generated(event = {EventType.UPDATE, EventType.INSERT})
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
 
-    @Column(name = "password_updated_at", nullable = false)
+    @Generated(event = {EventType.UPDATE, EventType.INSERT})
+    @Column(name = "password_updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime passwordUpdatedAt;
 
     public User(){
@@ -59,7 +56,6 @@ public class User {
         this.password = password;
         this.name = name;
         this.dateOfBirth = dateOfBirth;
-        this.passwordUpdatedAt = OffsetDateTime.now();
     }
 
     public UUID getId(){
@@ -116,9 +112,5 @@ public class User {
 
     public OffsetDateTime getPasswordUpdatedAt() {
         return passwordUpdatedAt;
-    }
-
-    public void setPasswordUpdatedAt(OffsetDateTime passwordUpdatedAt) {
-        this.passwordUpdatedAt = passwordUpdatedAt;
     }
 }

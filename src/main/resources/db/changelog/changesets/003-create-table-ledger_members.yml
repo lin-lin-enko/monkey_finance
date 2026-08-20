@@ -26,6 +26,11 @@ databaseChangeLog:
                     referencedColumnNames: id
                     nullable: false
               - column:
+                  name: username
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
                   name: is_default_ledger
                   type: boolean
                   defaultValueBoolean: false

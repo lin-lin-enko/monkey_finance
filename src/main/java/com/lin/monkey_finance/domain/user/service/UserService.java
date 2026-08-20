@@ -6,6 +6,7 @@ import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -25,12 +26,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final LedgerService ledgerService;
     private final JwtEncoder jwtEncoder;
+    private final EntityManager entityManager;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerService ledgerService, JwtEncoder jwtEncoder){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerService ledgerService, JwtEncoder jwtEncoder, EntityManager entityManager){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerService = ledgerService;
         this.jwtEncoder = jwtEncoder;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -54,8 +57,10 @@ public class UserService {
         );
 
         User savedUser = userRepository.save(user);
+        entityManager.flush();
+        entityManager.refresh(savedUser);
 
-        ledgerService.createDefaultLedger(savedUser.getId(), savedUser.getUsername());
+        ledgerService.createDefaultLedger(savedUser.getId());
 
         return new UserResponseDto(
                 savedUser.getId(),
