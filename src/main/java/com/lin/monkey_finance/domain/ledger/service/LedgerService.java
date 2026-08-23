@@ -1,9 +1,12 @@
 package com.lin.monkey_finance.domain.ledger.service;
 
+import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerResponseDto;
+import com.lin.monkey_finance.domain.ledger.mapper.LedgerMapper;
+import com.lin.monkey_finance.domain.ledger.mapper.LedgerMemberMapper;
 import com.lin.monkey_finance.domain.ledger.model.AccessType;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
@@ -27,12 +30,23 @@ public class LedgerService {
     private final LedgerMemberRepository ledgerMemberRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
+    private final LedgerMapper ledgerMapper;
+    private final LedgerMemberMapper ledgerMemberMapper;
 
-    public LedgerService(LedgerRepository ledgerRepository, LedgerMemberRepository ledgerMemberRepository, UserRepository userRepository, EntityManager entityManager){
+    public LedgerService(
+            LedgerRepository ledgerRepository,
+            LedgerMemberRepository ledgerMemberRepository,
+            UserRepository userRepository,
+            EntityManager entityManager,
+            LedgerMapper ledgerMapper,
+            LedgerMemberMapper ledgerMemberMapper
+            ){
         this.ledgerRepository = ledgerRepository;
         this.ledgerMemberRepository = ledgerMemberRepository;
         this.userRepository = userRepository;
         this.entityManager = entityManager;
+        this.ledgerMapper = ledgerMapper;
+        this.ledgerMemberMapper = ledgerMemberMapper;
     }
 
     @Transactional
@@ -51,13 +65,7 @@ public class LedgerService {
 
         if (!ledgers.isEmpty()){
             ledgers.forEach(ledger ->
-                    ledgerResponseDtoList.add(new LedgerResponseDto(
-                            ledger.getId(),
-                            ledger.getName(),
-                            ledger.getDescription(),
-                            ledger.getCreatorId(),
-                            ledger.getCreatedAt()
-                    )));
+                    ledgerResponseDtoList.add(ledgerMapper.toResponseDto(ledger)));
         }
 
         return ledgerResponseDtoList;
@@ -66,30 +74,16 @@ public class LedgerService {
     @Transactional
     public LedgerDetailedResponseDto getLedgerById(UUID ledgerId){
         Ledger ledger = ledgerRepository.findById(ledgerId)
-                .orElseThrow(() -> new IllegalArgumentException("No ledger with such id"));
+                .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
         List<LedgerMember> ledgerMembers = ledgerMemberRepository.findAllById_LedgerId(ledgerId);
-        List<LedgerMemberResponseDto> ledgerMemberResponseDtoList = ledgerMembers.stream().map(ledgerMember ->
-                new LedgerMemberResponseDto(
-                        ledgerMember.getId().getUserId(),
-                        ledgerMember.getUsername(),
-                        ledgerMember.getAccessType(),
-                        ledgerMember.getStatus(),
-                        ledgerMember.getJoinedAt()
-                )).toList();
-        return new LedgerDetailedResponseDto(
-                ledger.getId(),
-                ledger.getName(),
-                ledger.getDescription(),
-                ledger.getCreatorId(),
-                ledger.getCreatedAt(),
-                ledgerMemberResponseDtoList
-        );
+        List<LedgerMemberResponseDto> ledgerMemberResponseDtoList = ledgerMembers.stream().map(ledgerMemberMapper::toResponseDto).toList();
+        return ledgerMapper.toDetailedResponseDto(ledger, ledgerMemberResponseDtoList);
     }
 
     @Transactional
     public LedgerDetailedResponseDto create(LedgerRequestDto ledgerRequestDto, UUID userId){
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("No user with such id"));
+                .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
 
         List<LedgerMember> userMemberships = ledgerMemberRepository.findAllById_UserId(userId);
 
@@ -103,19 +97,6 @@ public class LedgerService {
         entityManager.refresh(savedLedger);
         entityManager.refresh(savedLedgerMember);
 
-        return new LedgerDetailedResponseDto(
-                savedLedger.getId(),
-                savedLedger.getName(),
-                savedLedger.getDescription(),
-                savedLedger.getCreatorId(),
-                savedLedger.getCreatedAt(),
-                List.of(new LedgerMemberResponseDto(
-                        savedLedgerMember.getId().getUserId(),
-                        savedLedgerMember.getUsername(),
-                        savedLedgerMember.getAccessType(),
-                        savedLedgerMember.getStatus(),
-                        savedLedgerMember.getJoinedAt()
-                ))
-        );
+        return ledgerMapper.toDetailedResponseDto(savedLedger, List.of(ledgerMemberMapper.toResponseDto(savedLedgerMember)));
     }
 }

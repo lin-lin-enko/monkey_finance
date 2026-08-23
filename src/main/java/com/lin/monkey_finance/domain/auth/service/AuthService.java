@@ -1,9 +1,14 @@
 package com.lin.monkey_finance.domain.auth.service;
+import com.lin.monkey_finance.common.exception.AccountStatusException;
+import com.lin.monkey_finance.common.exception.InvalidTokenException;
+import com.lin.monkey_finance.common.exception.ResourceAlreadyExistsException;
+import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
+import com.lin.monkey_finance.domain.user.mapper.UserMapper;
 import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.model.UserStatus;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
@@ -11,6 +16,8 @@ import com.lin.monkey_finance.domain.user.service.EmailService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -31,6 +38,7 @@ public class AuthService {
     private final JwtDecoder jwtDecoder;
     private final EntityManager entityManager;
     private final EmailService emailService;
+    private final UserMapper userMapper;
 
     public AuthService(
             UserRepository userRepository,
@@ -39,7 +47,8 @@ public class AuthService {
             JwtEncoder jwtEncoder,
             JwtDecoder jwtDecoder,
             EntityManager entityManager,
-            EmailService emailService){
+            EmailService emailService,
+            UserMapper userMapper){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerService = ledgerService;
@@ -47,16 +56,17 @@ public class AuthService {
         this.jwtDecoder = jwtDecoder;
         this.entityManager = entityManager;
         this.emailService = emailService;
+        this.userMapper = userMapper;
     }
 
     @Transactional
     public UserResponseDto register(UserRegisterDto userRegisterDto){
         if (userRepository.existsByEmail(userRegisterDto.email())){
-            throw new IllegalArgumentException("User with such email already exists" );
+            throw new ResourceAlreadyExistsException("User with such email already exists" );
         }
 
         if (userRepository.existsByUsername(userRegisterDto.username())){
-            throw new IllegalArgumentException("This username is already taken" );
+            throw new ResourceAlreadyExistsException("This username is already taken" );
         }
 
         String encodedPass = passwordEncoder.encode(userRegisterDto.password());
@@ -79,14 +89,7 @@ public class AuthService {
         String token = generateEmailConfirmationToken(savedUser.getId());
         emailService.sendConfirmationEmail(savedUser.getEmail(), token);
 
-        return new UserResponseDto(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getName(),
-                savedUser.getDateOfBirth(),
-                savedUser.getCreatedAt()
-        );
+        return userMapper.toResponseDto(savedUser);
     }
 
     public String generateEmailConfirmationToken(UUID userId){
@@ -108,26 +111,17 @@ public class AuthService {
         try {
             jwt = jwtDecoder.decode(token);
         } catch (JwtException e){
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Confirmation link has expired or is invalid"
-            );
+            throw new InvalidTokenException("Confirmation link has expired or is invalid");
         }
 
         if (!"EMAIL_CONFIRMATION".equals(jwt.getClaimAsString("purpose"))){
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid token type"
-            );
+            throw new InvalidTokenException("Invalid token type");
         }
 
         UUID userId = UUID.fromString(jwt.getSubject());
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
@@ -136,23 +130,18 @@ public class AuthService {
     @Transactional
     public AuthResponseDto login(UserLoginDto userLoginDto){
         User user = userRepository.findByEmail(userLoginDto.email())
-                .orElseThrow(() -> new IllegalArgumentException("Wrong email or password"));
+                .orElseThrow(() -> new BadCredentialsException("Wrong email or password"));
 
         if(!passwordEncoder.matches(userLoginDto.password(), user.getPassword())){
-            throw new IllegalArgumentException("Wrong email or password");
+            throw new BadCredentialsException("Wrong email or password");
         }
 
         switch (user.getStatus()){
-            case BLOCKED -> throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Your account has been blocked");
+            case BLOCKED -> throw new AccountStatusException("Your account has been blocked");
             case PENDING -> {
                 String token = generateEmailConfirmationToken(user.getId());
                 emailService.sendConfirmationEmail(user.getEmail(), token);
-                throw new ResponseStatusException(
-                        HttpStatus.FORBIDDEN,
-                        "Your email wasn't yet confirmed. The confirmation link was sent to you again"
-                );
+                throw new AccountStatusException("Your email wasn't yet confirmed. The confirmation link was sent to you again");
             }
         }
 
@@ -170,13 +159,6 @@ public class AuthService {
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
 
-        UserResponseDto userResponseDto = new UserResponseDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getName(),
-                user.getDateOfBirth(),
-                user.getCreatedAt());
-        return new AuthResponseDto(token, userResponseDto);
+        return new AuthResponseDto(token, userMapper.toResponseDto(user));
     }
 }
