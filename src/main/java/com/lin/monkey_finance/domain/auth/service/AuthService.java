@@ -3,6 +3,7 @@ import com.lin.monkey_finance.common.exception.AccountStatusException;
 import com.lin.monkey_finance.common.exception.InvalidTokenException;
 import com.lin.monkey_finance.common.exception.ResourceAlreadyExistsException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
@@ -80,11 +81,13 @@ public class AuthService {
                 UserStatus.PENDING
         );
 
-        User savedUser = userRepository.save(user);
-        entityManager.flush();
-        entityManager.refresh(savedUser);
+        User savedUser = userRepository.saveAndFlush(user);
 
-        ledgerService.createDefaultLedger(savedUser.getId());
+        LedgerRequestDto ledgerRequestDto = new LedgerRequestDto(
+                "My ledger",
+                "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you"
+        );
+        ledgerService.create(ledgerRequestDto, savedUser);
 
         String token = generateEmailConfirmationToken(savedUser.getId());
         emailService.sendConfirmationEmail(savedUser.getEmail(), token);

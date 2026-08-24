@@ -30,10 +30,15 @@ public class Ledger {
     @Column(name = "creator_id", nullable = false)
     private UUID creatorId;
 
-    @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "ledger")
     private List<LedgerMember> members = new ArrayList<>();
 
-    public Ledger(){}
+    public void addMember(LedgerMember member){
+        this.members.add(member);
+        member.setLedger(this);
+    }
+
+    protected Ledger(){}
 
     public Ledger(String name, String description, UUID creatorId){
         this.id = UUID.randomUUID();
@@ -72,5 +77,13 @@ public class Ledger {
 
     public UUID getCreatorId() {
         return creatorId;
+    }
+
+    public List<LedgerMember> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<LedgerMember> members) {
+        this.members = members;
     }
 }

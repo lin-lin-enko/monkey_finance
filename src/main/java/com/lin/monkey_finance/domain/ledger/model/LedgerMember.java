@@ -43,7 +43,7 @@ public class LedgerMember {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
-    public LedgerMember(){}
+    protected LedgerMember(){}
 
     public LedgerMember(UUID ledgerId, UUID userId, Ledger ledger, User user, String username, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
         this.id = new LedgerMemberId(ledgerId, userId);

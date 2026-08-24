@@ -51,8 +51,7 @@ public class User {
     @Column(name = "status", nullable = false)
     private UserStatus status = UserStatus.PENDING;
 
-    public User(){
-    }
+    protected User(){}
 
     public User(String username, String email, String password, String name, LocalDate dateOfBirth, UserStatus status){
         this.username = username;

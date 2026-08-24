@@ -1,9 +1,7 @@
 package com.lin.monkey_finance.domain.ledger.controller;
 
-import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerResponseDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerUpdateDto;
+import com.lin.monkey_finance.domain.ledger.dto.*;
+import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +17,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/ledgers")
 public class LedgerController {
     private final LedgerService ledgerService;
+    private final LedgerMemberService ledgerMemberService;
 
-    public LedgerController(LedgerService ledgerService){
+    public LedgerController(
+            LedgerService ledgerService,
+            LedgerMemberService ledgerMemberService
+    ){
         this.ledgerService = ledgerService;
+        this.ledgerMemberService = ledgerMemberService;
     }
 
     @GetMapping()
@@ -69,5 +72,16 @@ public class LedgerController {
         UUID userId = UUID.fromString(jwt.getSubject());
         ledgerService.delete(userId, ledgerId);
         return ResponseEntity.status(204).build();
+    }
+
+    @PostMapping("/{ledgerId}/members")
+    public ResponseEntity<LedgerMemberResponseDto> addMember(
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody LedgerMemberRequestDto requestDto
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        LedgerMemberResponseDto responseDto = ledgerMemberService.add(requestDto, ledgerId, userId);
+        return ResponseEntity.status(201).body(responseDto);
     }
 }
