@@ -4,7 +4,6 @@ import com.lin.monkey_finance.common.exception.AccessDeniedException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.dto.*;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerMapper;
-import com.lin.monkey_finance.domain.ledger.mapper.LedgerMemberMapper;
 import com.lin.monkey_finance.domain.ledger.model.*;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
@@ -26,22 +25,19 @@ public class LedgerService {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final LedgerMapper ledgerMapper;
-    private final LedgerMemberMapper ledgerMemberMapper;
 
     public LedgerService(
             LedgerRepository ledgerRepository,
             LedgerMemberRepository ledgerMemberRepository,
             UserRepository userRepository,
             EntityManager entityManager,
-            LedgerMapper ledgerMapper,
-            LedgerMemberMapper ledgerMemberMapper
+            LedgerMapper ledgerMapper
             ){
         this.ledgerRepository = ledgerRepository;
         this.ledgerMemberRepository = ledgerMemberRepository;
         this.userRepository = userRepository;
         this.entityManager = entityManager;
         this.ledgerMapper = ledgerMapper;
-        this.ledgerMemberMapper = ledgerMemberMapper;
     }
 
     @Transactional
@@ -70,9 +66,7 @@ public class LedgerService {
     public LedgerDetailedResponseDto getLedgerById(UUID ledgerId){
         Ledger ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
-        List<LedgerMember> ledgerMembers = ledgerMemberRepository.findAllById_LedgerId(ledgerId);
-        List<LedgerMemberResponseDto> ledgerMemberResponseDtoList = ledgerMembers.stream().map(ledgerMemberMapper::toResponseDto).toList();
-        return ledgerMapper.toDetailedResponseDto(ledger, ledgerMemberResponseDtoList);
+        return ledgerMapper.toDetailedResponseDto(ledger);
     }
 
     @Transactional
@@ -85,19 +79,20 @@ public class LedgerService {
         Ledger ledger = new Ledger(ledgerRequestDto.name(), ledgerRequestDto.description(), userId);
         Ledger savedLedger = ledgerRepository.save(ledger);
 
-        LedgerMember ledgerMember = new LedgerMember(savedLedger.getId(), savedLedger.getCreatorId(), user.getUsername(), userMemberships.isEmpty(), AccessType.OWNER, MemberStatus.ACTIVE);
+        LedgerMember ledgerMember = new LedgerMember(savedLedger.getId(), savedLedger.getCreatorId(), ledger, user, user.getUsername(), userMemberships.isEmpty(), AccessType.OWNER, MemberStatus.ACTIVE);
+
         LedgerMember savedLedgerMember = ledgerMemberRepository.save(ledgerMember);
 
         entityManager.flush();
         entityManager.refresh(savedLedger);
         entityManager.refresh(savedLedgerMember);
 
-        return ledgerMapper.toDetailedResponseDto(savedLedger, List.of(ledgerMemberMapper.toResponseDto(savedLedgerMember)));
+        return ledgerMapper.toDetailedResponseDto(savedLedger);
     }
 
     @Transactional
     public LedgerDetailedResponseDto edit(LedgerUpdateDto ledgerUpdateDto, UUID userId, UUID ledgerId){
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
         LedgerMemberId ledgerMemberId = new LedgerMemberId(ledgerId, userId);
         LedgerMember ledgerMember = ledgerMemberRepository.findById(ledgerMemberId)
@@ -107,13 +102,28 @@ public class LedgerService {
         }
 
         Ledger ledger = ledgerRepository.findById(ledgerId)
-                .orElseThrow(() -> new ResourceNotFoundException("No leder with such id"));
-        List<LedgerMemberResponseDto> members = ledgerMemberRepository.findAllById_LedgerId(ledgerId).stream().map(
-                ledgerMemberMapper::toResponseDto).toList();
+                .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
 
         ledgerMapper.updateLedgerFromDto(ledgerUpdateDto, ledger);
 
-        return ledgerMapper.toDetailedResponseDto(ledger, members);
+        return ledgerMapper.toDetailedResponseDto(ledger);
 
+    }
+
+    @Transactional
+    public void delete(UUID userId, UUID ledgerId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
+        LedgerMemberId ledgerMemberId = new LedgerMemberId(ledgerId, userId);
+        LedgerMember ledgerMember = ledgerMemberRepository.findById(ledgerMemberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ledger member not found"));
+        if (ledgerMember.getAccessType() != AccessType.OWNER){
+            throw new AccessDeniedException("User isn't permitted to delete this ledger");
+        }
+
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
+
+        ledgerRepository.delete(ledger);
     }
 }

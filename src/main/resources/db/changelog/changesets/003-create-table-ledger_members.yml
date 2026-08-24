@@ -15,6 +15,7 @@ databaseChangeLog:
                     referencedSchemaName: dev
                     referencedTableName: ledgers
                     referencedColumnNames: id
+                    onDelete: CASCADE
                     nullable: false
               - column:
                   name: user_id

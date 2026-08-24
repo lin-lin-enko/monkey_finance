@@ -13,8 +13,7 @@ import java.util.List;
 public interface LedgerMapper {
     LedgerResponseDto toResponseDto(Ledger ledger);
 
-    @Mapping(target = "members", source = "members")
-    LedgerDetailedResponseDto toDetailedResponseDto(Ledger ledger, List<LedgerMemberResponseDto> members);
+    LedgerDetailedResponseDto toDetailedResponseDto(Ledger ledger);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateLedgerFromDto(LedgerUpdateDto ledgerUpdateDto, @MappingTarget Ledger ledger);

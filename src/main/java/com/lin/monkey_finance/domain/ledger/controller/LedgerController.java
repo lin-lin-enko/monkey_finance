@@ -60,4 +60,14 @@ public class LedgerController {
         LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.edit(ledgerUpdateDto, userId, ledgerId);
         return ResponseEntity.ok(ledgerDetailedResponseDto);
     }
+
+    @DeleteMapping("/{ledgerId}")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID ledgerId
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        ledgerService.delete(userId, ledgerId);
+        return ResponseEntity.status(204).build();
+    }
 }

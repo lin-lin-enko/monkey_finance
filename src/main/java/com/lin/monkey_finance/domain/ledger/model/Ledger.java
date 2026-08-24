@@ -1,14 +1,13 @@
 package com.lin.monkey_finance.domain.ledger.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +29,9 @@ public class Ledger {
 
     @Column(name = "creator_id", nullable = false)
     private UUID creatorId;
+
+    @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LedgerMember> members = new ArrayList<>();
 
     public Ledger(){}
 

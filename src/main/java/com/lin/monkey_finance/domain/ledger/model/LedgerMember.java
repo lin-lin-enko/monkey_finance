@@ -1,5 +1,6 @@
 package com.lin.monkey_finance.domain.ledger.model;
 
+import com.lin.monkey_finance.domain.user.model.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
@@ -13,6 +14,16 @@ public class LedgerMember {
 
     @EmbeddedId
     private LedgerMemberId id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("ledgerId")
+    @JoinColumn(name = "ledger_id")
+    private Ledger ledger;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false)
     private String username;
@@ -34,8 +45,10 @@ public class LedgerMember {
 
     public LedgerMember(){}
 
-    public LedgerMember(UUID ledgerId, UUID userId, String username, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
+    public LedgerMember(UUID ledgerId, UUID userId, Ledger ledger, User user, String username, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
         this.id = new LedgerMemberId(ledgerId, userId);
+        this.ledger = ledger;
+        this.user = user;
         this.username = username;
         this.isDefaultLedger = isDefaultLedger;
         this.accessType = accessType;
@@ -44,6 +57,22 @@ public class LedgerMember {
 
     public LedgerMemberId getId() {
         return id;
+    }
+
+    public Ledger getLedger() {
+        return ledger;
+    }
+
+    public void setLedger(Ledger ledger) {
+        this.ledger = ledger;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public void setUsername(String username) {
