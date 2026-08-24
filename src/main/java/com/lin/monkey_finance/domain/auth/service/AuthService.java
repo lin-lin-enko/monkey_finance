@@ -143,6 +143,7 @@ public class AuthService {
                 emailService.sendConfirmationEmail(user.getEmail(), token);
                 throw new AccountStatusException("Your email wasn't yet confirmed. The confirmation link was sent to you again");
             }
+            case DELETED -> throw new AccountStatusException("Your account has been deleted");
         }
 
 

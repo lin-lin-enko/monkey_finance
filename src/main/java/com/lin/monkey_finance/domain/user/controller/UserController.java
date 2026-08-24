@@ -8,10 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -26,13 +23,22 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PatchMapping("/edit")
-    public ResponseEntity<UserResponseDto> editUserInfo(
+    @PatchMapping()
+    public ResponseEntity<UserResponseDto> edit(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UserUpdateDto userUpdateDto
             ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        UserResponseDto userResponseDto = userService.editUserInfo(userId, userUpdateDto);
+        UserResponseDto userResponseDto = userService.edit(userId, userUpdateDto);
+        return ResponseEntity.ok(userResponseDto);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<UserResponseDto> delete(
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        UserResponseDto userResponseDto = userService.delete(userId);
         return ResponseEntity.ok(userResponseDto);
     }
 }

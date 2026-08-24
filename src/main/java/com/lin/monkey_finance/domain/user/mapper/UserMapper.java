@@ -12,7 +12,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface UserMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateUserFromDto(@MappingTarget User user, UserUpdateDto userUpdateDto);
+    void updateUserFromDto(UserUpdateDto userUpdateDto, @MappingTarget User user);
 
     UserResponseDto toResponseDto(User user);
 }

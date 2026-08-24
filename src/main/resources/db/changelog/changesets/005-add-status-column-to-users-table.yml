@@ -17,7 +17,7 @@ databaseChangeLog:
             dbms: postgresql
             sql: |
               ALTER TABLE dev.users
-              ADD CONSTRAINT check_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED'));
+              ADD CONSTRAINT check_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DELETED'));
               
               
           
