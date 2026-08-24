@@ -1,16 +1,11 @@
 package com.lin.monkey_finance.domain.ledger.service;
 
+import com.lin.monkey_finance.common.exception.AccessDeniedException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerResponseDto;
+import com.lin.monkey_finance.domain.ledger.dto.*;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerMapper;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerMemberMapper;
-import com.lin.monkey_finance.domain.ledger.model.AccessType;
-import com.lin.monkey_finance.domain.ledger.model.Ledger;
-import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
-import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
+import com.lin.monkey_finance.domain.ledger.model.*;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
 import com.lin.monkey_finance.domain.user.model.User;
@@ -98,5 +93,27 @@ public class LedgerService {
         entityManager.refresh(savedLedgerMember);
 
         return ledgerMapper.toDetailedResponseDto(savedLedger, List.of(ledgerMemberMapper.toResponseDto(savedLedgerMember)));
+    }
+
+    @Transactional
+    public LedgerDetailedResponseDto edit(LedgerUpdateDto ledgerUpdateDto, UUID userId, UUID ledgerId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
+        LedgerMemberId ledgerMemberId = new LedgerMemberId(ledgerId, userId);
+        LedgerMember ledgerMember = ledgerMemberRepository.findById(ledgerMemberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ledger member not found"));
+        if (ledgerMember.getAccessType() != AccessType.ADMIN && ledgerMember.getAccessType() != AccessType.OWNER){
+            throw new AccessDeniedException("User isn't permitted to edit this ledger");
+        }
+
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new ResourceNotFoundException("No leder with such id"));
+        List<LedgerMemberResponseDto> members = ledgerMemberRepository.findAllById_LedgerId(ledgerId).stream().map(
+                ledgerMemberMapper::toResponseDto).toList();
+
+        ledgerMapper.updateLedgerFromDto(ledgerUpdateDto, ledger);
+
+        return ledgerMapper.toDetailedResponseDto(ledger, members);
+
     }
 }
