@@ -9,7 +9,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,8 +29,6 @@ public class LedgerController {
     @GetMapping()
     public ResponseEntity<List<LedgerResponseDto>> getCurrentUserLedgers(@AuthenticationPrincipal Jwt jwt){
         UUID userId = UUID.fromString(jwt.getSubject());
-        System.out.println("TOKEN    " + jwt.getTokenValue());
-        System.out.println("SUBJECT    " + jwt.getSubject());
 
         List<LedgerResponseDto> ledgerResponseDtoList = ledgerService.getCurrentUserLedgers(userId);
         return ResponseEntity.ok(ledgerResponseDtoList);

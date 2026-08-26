@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-date-modification-in-ledger-member-entity
+      author: alina
+      comment: Now joined_at will only be generated upon updating the ledger_members field and only after invitation acceptation
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: ledger_members
+            columns:
+              - column:
+                  name: invited_at
+                  type: timestamptz
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: left_at
+                  type: timestamptz
+        - dropNotNullConstraint:
+            schemaName: dev
+            tableName: ledger_members
+            columnName: joined_at
+            columnDataType: timestamptz

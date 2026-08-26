@@ -5,3 +5,11 @@ databaseChangeLog:
       file: db/changelog/changesets/002-create-table-ledgers.yml
   - include:
       file: db/changelog/changesets/003-create-table-ledger_members.yml
+  - include:
+      file: db/changelog/changesets/004-user-password-update-trigger.yml
+  - include:
+      file: db/changelog/changesets/005-add-status-column-to-users-table.yml
+  - include:
+      file: db/changelog/changesets/006-date-modification-in-ledger-member-entity.yml
+  - include:
+      file: db/changelog/changesets/007-adding-info-to-ledger-member-table.yml

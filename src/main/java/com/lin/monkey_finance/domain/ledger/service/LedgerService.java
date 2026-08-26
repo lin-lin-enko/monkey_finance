@@ -50,17 +50,17 @@ public class LedgerService {
         Ledger savedLedger = ledgerRepository.save(ledger);
 
         LedgerMember member = new LedgerMember(
-                savedLedger.getId(),
-                user.getId(),
                 savedLedger,
                 user,
                 user.getUsername(),
                 isDefault,
                 AccessType.OWNER,
+                null,
                 MemberStatus.ACTIVE);
 
+        member.acceptInvitation();
+        ledgerMemberRepository.save(member);
         savedLedger.addMember(member);
-
         return ledgerMapper.toDetailedResponseDto(savedLedger);
     }
 

@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-adding-info-to-ledger-member-table
+      author: alina
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: ledger_members
+            columns:
+              - column:
+                  name: invited_by_user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_ledger_members_invtited_by_user
+                    referencedSchemaName: dev
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    onDelete: CASCADE

@@ -6,7 +6,6 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "ledger_members", schema = "dev")
@@ -36,8 +35,18 @@ public class LedgerMember {
     private AccessType accessType;
 
     @Generated(event = EventType.INSERT)
-    @Column(name = "joined_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "invited_at", nullable = false, updatable = false, insertable = false)
+    private OffsetDateTime invitedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invited_by_user_id")
+    private User invitedByUser;
+
+    @Column(name = "joined_at")
     private OffsetDateTime joinedAt;
+
+    @Column(name = "left_at")
+    private OffsetDateTime leftAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -45,14 +54,33 @@ public class LedgerMember {
 
     protected LedgerMember(){}
 
-    public LedgerMember(UUID ledgerId, UUID userId, Ledger ledger, User user, String username, boolean isDefaultLedger, AccessType accessType, MemberStatus status){
-        this.id = new LedgerMemberId(ledgerId, userId);
+    public LedgerMember(
+            Ledger ledger,
+            User user,
+            String username,
+            boolean isDefaultLedger,
+            AccessType accessType,
+            User invitedByUser,
+            MemberStatus status
+    ){
+        this.id = new LedgerMemberId(ledger.getId(), user.getId());
         this.ledger = ledger;
         this.user = user;
         this.username = username;
         this.isDefaultLedger = isDefaultLedger;
         this.accessType = accessType;
+        this.invitedByUser = invitedByUser;
         this.status = status;
+    }
+
+    public void acceptInvitation(){
+        this.status = MemberStatus.ACTIVE;
+        this.joinedAt = OffsetDateTime.now();
+    }
+
+    public void leaveLedger(){
+        this.status = MemberStatus.LEFT;
+        this.leftAt = OffsetDateTime.now();
     }
 
     public LedgerMemberId getId() {
@@ -110,4 +138,18 @@ public class LedgerMember {
     public OffsetDateTime getJoinedAt() {
         return joinedAt;
     }
+
+    public User getInvitedByUser() {
+        return invitedByUser;
+    }
+
+    public void setInvitedByUser(User invitedByUser) {
+        this.invitedByUser = invitedByUser;
+    }
+
+    public OffsetDateTime getInvitedAt(){
+        return invitedAt;
+    }
+
+    public OffsetDateTime getLeftAt() { return leftAt; }
 }

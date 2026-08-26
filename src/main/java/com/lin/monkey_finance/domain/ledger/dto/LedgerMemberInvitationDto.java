@@ -6,10 +6,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 
-//Used for adding a member to the ledger members table and requesting user to accept the invitation
-public record LedgerMemberRequestDto(
-    UUID userId,
-    String username,
+// used to invite user to a ledger
+public record LedgerMemberInvitationDto(
+    UUID ledgerId,
+    String ledgerName,
+    String ledgerDescription,
+    String invitedByUsername,
+    UUID invitedByUserId,
     AccessType accessType,
     OffsetDateTime invitedAt
 ){}

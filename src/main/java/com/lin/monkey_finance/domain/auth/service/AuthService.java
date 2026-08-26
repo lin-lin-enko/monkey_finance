@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -62,6 +63,7 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto register(UserRegisterDto userRegisterDto){
+        SecurityContextHolder.clearContext();
         if (userRepository.existsByEmail(userRegisterDto.email())){
             throw new ResourceAlreadyExistsException("User with such email already exists" );
         }
