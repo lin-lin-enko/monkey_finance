@@ -81,4 +81,23 @@ public class LedgerController {
         LedgerMemberResponseDto responseDto = ledgerMemberService.add(requestDto, ledgerId, userId);
         return ResponseEntity.status(201).body(responseDto);
     }
+
+    @PatchMapping("/invitations/{ledgerId}/accept")
+    public ResponseEntity<LedgerMemberResponseDto> acceptInvitation(
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(ledgerMemberService.acceptInvitation(ledgerId, userId));
+    }
+
+    @DeleteMapping("/invitations/{ledgerId}/decline")
+    public ResponseEntity<String> declineInvitation(
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        ledgerMemberService.declineInvitation(ledgerId, userId);
+        return ResponseEntity.ok("Invitation declined");
+    }
 }

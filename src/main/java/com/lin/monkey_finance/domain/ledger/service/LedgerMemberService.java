@@ -1,6 +1,7 @@
 package com.lin.monkey_finance.domain.ledger.service;
 
 import com.lin.monkey_finance.common.exception.AccessDeniedException;
+import com.lin.monkey_finance.common.exception.InvalidStateException;
 import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
 import com.lin.monkey_finance.common.exception.ResourceAlreadyExistsException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
@@ -105,5 +106,32 @@ public class LedgerMemberService {
         }
 
         return ledgerMemberMapper.toResponseDto(savedLedgerMember, authorizedUser);
+    }
+
+    @Transactional
+    public LedgerMemberResponseDto acceptInvitation(UUID ledgerId, UUID userId){
+
+        LedgerMember ledgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("Invitation to this ledger wasn't found or the user has declined it"));
+
+        if (ledgerMember.getStatus() == MemberStatus.ACTIVE) throw new InvalidStateException("The user has already accepted the invitation to this ledger");
+
+        if (ledgerMember.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot accept the invitation with the status " + ledgerMember.getStatus());
+
+        ledgerMember.acceptInvitation();
+        return ledgerMemberMapper.toResponseDto(ledgerMember, ledgerMember.getUser());
+    }
+
+    @Transactional
+    public void declineInvitation(UUID ledgerId, UUID userId){
+
+        LedgerMember ledgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("Invitation to this ledger wasn't found or the user has declined it"));
+
+        if (ledgerMember.getStatus() == MemberStatus.ACTIVE) throw new InvalidStateException("The user is already a member this ledger");
+
+        if (ledgerMember.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot decline the invitation with the status " + ledgerMember.getStatus());
+
+        ledgerMemberRepository.delete(ledgerMember);
     }
 }

@@ -5,9 +5,7 @@ import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
 import com.lin.monkey_finance.domain.user.model.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LedgerMemberMapper {
