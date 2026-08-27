@@ -6,6 +6,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "ledger_members", schema = "dev")
@@ -23,9 +24,6 @@ public class LedgerMember {
     @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Column(nullable = false)
-    private String username;
 
     @Column(name = "is_default_ledger", nullable = false)
     private boolean isDefaultLedger = false;
@@ -51,6 +49,10 @@ public class LedgerMember {
     @Column(name = "blocked_at")
     private OffsetDateTime blockedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "blocked_by_user_id")
+    private User blockedByUser;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberStatus status;
@@ -60,7 +62,6 @@ public class LedgerMember {
     public LedgerMember(
             Ledger ledger,
             User user,
-            String username,
             boolean isDefaultLedger,
             AccessType accessType,
             User invitedByUser,
@@ -69,7 +70,6 @@ public class LedgerMember {
         this.id = new LedgerMemberId(ledger.getId(), user.getId());
         this.ledger = ledger;
         this.user = user;
-        this.username = username;
         this.isDefaultLedger = isDefaultLedger;
         this.accessType = accessType;
         this.invitedByUser = invitedByUser;
@@ -86,9 +86,10 @@ public class LedgerMember {
         this.leftAt = OffsetDateTime.now();
     }
 
-    public void blockMember(){
+    public void blockMember(User blockedByUser){
         this.status = MemberStatus.BLOCKED;
         this.blockedAt = OffsetDateTime.now();
+        this.blockedByUser = blockedByUser;
     }
 
     public LedgerMemberId getId() {
@@ -109,14 +110,6 @@ public class LedgerMember {
 
     public void setUser(User user) {
         this.user = user;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getUsername() {
-        return username;
     }
 
     public boolean isDefaultLedger() {
@@ -162,4 +155,12 @@ public class LedgerMember {
     public OffsetDateTime getLeftAt() { return leftAt; }
 
     public OffsetDateTime getBlockedAt() {return blockedAt; }
+
+    public User getBlockedByUser() {
+        return blockedByUser;
+    }
+
+    public void setBlockedByUser(User blockedByUser) {
+        this.blockedByUser = blockedByUser;
+    }
 }

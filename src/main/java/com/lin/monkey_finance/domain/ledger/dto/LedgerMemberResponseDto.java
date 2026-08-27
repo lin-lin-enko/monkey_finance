@@ -9,12 +9,12 @@ import java.util.UUID;
 // used to get info about a user's membership
 public record LedgerMemberResponseDto(
         UUID userId,
-        String username,
         AccessType accessType,
         MemberStatus status,
         OffsetDateTime invitedAt,
         UUID invitedByUserId,
-        String invitedByUsername,
         OffsetDateTime joinedAt,
-        OffsetDateTime leftAt
+        OffsetDateTime leftAt,
+        OffsetDateTime blockedAt,
+        UUID blockedByUserId
 ) {}

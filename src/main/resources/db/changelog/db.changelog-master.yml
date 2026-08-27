@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/changesets/006-date-modification-in-ledger-member-entity.yml
   - include:
       file: db/changelog/changesets/007-adding-info-to-ledger-member-table.yml
+  - include:
+      file: db/changelog/changesets/008-delete-username-field-from-ledger-member-table.yml

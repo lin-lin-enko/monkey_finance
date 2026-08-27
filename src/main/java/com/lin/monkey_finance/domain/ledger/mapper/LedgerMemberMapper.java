@@ -11,16 +11,14 @@ import org.mapstruct.*;
 public interface LedgerMemberMapper {
 
     @Mapping(target = "userId", source = "ledgerMember.id.userId")
-    @Mapping(target = "invitedByUsername", source = "authorizedUser.username")
-    @Mapping(target = "invitedByUserId", source = "authorizedUser.id")
     @Mapping(target = "status", source = "ledgerMember.status")
-    @Mapping(target = "username", source = "ledgerMember.username")
-    LedgerMemberResponseDto toResponseDto(LedgerMember ledgerMember, User authorizedUser);
+    @Mapping(target = "invitedByUserId", source = "ledgerMember.invitedByUser.id")
+    @Mapping(target = "blockedByUserId", source = "ledgerMember.blockedByUser.id")
+    LedgerMemberResponseDto toResponseDto(LedgerMember ledgerMember);
 
     @Mapping(target = "ledgerId", source = "ledgerMember.id.ledgerId")
     @Mapping(target = "ledgerName", source = "ledger.name")
     @Mapping(target = "ledgerDescription", source = "ledger.description")
-    @Mapping(target = "invitedByUsername", source = "authorizedUser.username")
-    @Mapping(target = "invitedByUserId", source = "authorizedUser.id")
-    LedgerMemberInvitationDto toInvitationDto(LedgerMember ledgerMember, Ledger ledger, User authorizedUser);
+    @Mapping(target = "invitedByUserId", source = "ledgerMember.invitedByUser.id")
+    LedgerMemberInvitationDto toInvitationDto(LedgerMember ledgerMember, Ledger ledger);
 }

@@ -72,7 +72,6 @@ public class LedgerMemberService {
         LedgerMember ledgerMember = new LedgerMember(
                 ledger,
                 targetUser,
-                requestDto.username(),
                 false,
                 requestDto.accessType(),
                 authorizedUser,
@@ -80,7 +79,7 @@ public class LedgerMemberService {
 
         LedgerMember savedLedgerMember = ledgerMemberRepository.saveAndFlush(ledgerMember);
 
-        LedgerMemberInvitationDto invitationDto = ledgerMemberMapper.toInvitationDto(savedLedgerMember, ledger, authorizedUser);
+        LedgerMemberInvitationDto invitationDto = ledgerMemberMapper.toInvitationDto(savedLedgerMember, ledger);
 
         final String targetUserId = targetUser.getId().toString();
 
@@ -105,7 +104,7 @@ public class LedgerMemberService {
             );
         }
 
-        return ledgerMemberMapper.toResponseDto(savedLedgerMember, authorizedUser);
+        return ledgerMemberMapper.toResponseDto(savedLedgerMember);
     }
 
     @Transactional
@@ -119,7 +118,7 @@ public class LedgerMemberService {
         if (ledgerMember.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot accept the invitation with the status " + ledgerMember.getStatus());
 
         ledgerMember.acceptInvitation();
-        return ledgerMemberMapper.toResponseDto(ledgerMember, ledgerMember.getUser());
+        return ledgerMemberMapper.toResponseDto(ledgerMember);
     }
 
     @Transactional
@@ -146,5 +145,33 @@ public class LedgerMemberService {
         }
 
         ledgerMember.leaveLedger();
+    }
+
+    @Transactional
+    public LedgerMemberResponseDto block(UUID ledgerId, UUID targetUserId, UUID authorizedUserId){
+        LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
+                .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
+        if (!userRepository.existsById(authorizedUserId)){
+            throw new ResourceNotFoundException("Authorized user not found");
+        }
+        User authorizedUser = userRepository.getReferenceById(authorizedUserId);
+        LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
+                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
+
+
+        if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
+            throw new AccessDeniedException("Only owners and admins can block users");
+        }
+
+        if (targetLedgerMember.getAccessType() == AccessType.OWNER){
+            throw new AccessDeniedException("An owner can't be blocked");
+        }
+
+        if (targetLedgerMember.getStatus() == MemberStatus.BLOCKED){
+            throw new InvalidStateException("Target user is already blocked");
+        }
+
+        targetLedgerMember.blockMember(authorizedUser);
+        return ledgerMemberMapper.toResponseDto(targetLedgerMember);
     }
 }

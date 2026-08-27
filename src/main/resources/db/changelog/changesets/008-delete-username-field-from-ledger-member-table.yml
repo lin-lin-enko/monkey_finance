@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-delete-username-field-from-ledger-member-table
+      author: alina
+      changes:
+        - dropColumn:
+            schemaName: dev
+            tableName: ledger_members
+            columnName: username

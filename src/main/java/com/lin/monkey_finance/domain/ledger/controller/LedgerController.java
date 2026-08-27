@@ -110,4 +110,15 @@ public class LedgerController {
         ledgerMemberService.leaveLedger(ledgerId, userId);
         return ResponseEntity.ok("User successfully left the ledger");
     }
+
+    @PatchMapping("/{ledgerId}/members/{targetUserId}/block")
+    public ResponseEntity<LedgerMemberResponseDto> block(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        LedgerMemberResponseDto responseDto = ledgerMemberService.block(ledgerId, targetUserId, userId);
+        return ResponseEntity.ok(responseDto);
+    }
 }

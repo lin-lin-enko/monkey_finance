@@ -11,7 +11,6 @@ public record LedgerMemberInvitationDto(
     UUID ledgerId,
     String ledgerName,
     String ledgerDescription,
-    String invitedByUsername,
     UUID invitedByUserId,
     AccessType accessType,
     OffsetDateTime invitedAt

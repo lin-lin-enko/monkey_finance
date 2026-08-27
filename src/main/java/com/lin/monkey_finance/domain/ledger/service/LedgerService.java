@@ -52,7 +52,6 @@ public class LedgerService {
         LedgerMember member = new LedgerMember(
                 savedLedger,
                 user,
-                user.getUsername(),
                 isDefault,
                 AccessType.OWNER,
                 null,
