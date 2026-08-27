@@ -100,4 +100,14 @@ public class LedgerController {
         ledgerMemberService.declineInvitation(ledgerId, userId);
         return ResponseEntity.ok("Invitation declined");
     }
+
+    @PatchMapping("/{ledgerId}/leave")
+    public ResponseEntity<String> leaveLedger(
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        ledgerMemberService.leaveLedger(ledgerId, userId);
+        return ResponseEntity.ok("User successfully left the ledger");
+    }
 }

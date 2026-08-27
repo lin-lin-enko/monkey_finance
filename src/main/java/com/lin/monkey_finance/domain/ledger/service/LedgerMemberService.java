@@ -129,9 +129,22 @@ public class LedgerMemberService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation to this ledger wasn't found or the user has declined it"));
 
         if (ledgerMember.getStatus() == MemberStatus.ACTIVE) throw new InvalidStateException("The user is already a member this ledger");
-
         if (ledgerMember.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot decline the invitation with the status " + ledgerMember.getStatus());
 
         ledgerMemberRepository.delete(ledgerMember);
+    }
+
+    @Transactional
+    public void leaveLedger(UUID ledgerId, UUID userId){
+        LedgerMember ledgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("The user is not a member of this ledger"));
+
+        switch (ledgerMember.getStatus()){
+            case MemberStatus.LEFT -> throw new InvalidStateException("The user has already left the ledger");
+            case MemberStatus.BLOCKED -> throw new InvalidStateException("The user was blocked from that ledger");
+            case MemberStatus.PENDING -> throw new InvalidStateException("The user hasn't yet accepted the invitation to the ledger");
+        }
+
+        ledgerMember.leaveLedger();
     }
 }

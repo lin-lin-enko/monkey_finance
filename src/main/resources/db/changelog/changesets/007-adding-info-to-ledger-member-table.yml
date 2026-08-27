@@ -16,3 +16,16 @@ databaseChangeLog:
                     referencedTableName: users
                     referencedColumnNames: id
                     onDelete: CASCADE
+              - column:
+                  name: blocked_at
+                  type: timestamptz
+                  defaultValue: null
+              - column:
+                  name: blocked_by_user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_ledger_members_blocked_by_user
+                    referencedSchemaName: dev
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    onDelete: CASCADE

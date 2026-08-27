@@ -48,6 +48,9 @@ public class LedgerMember {
     @Column(name = "left_at")
     private OffsetDateTime leftAt;
 
+    @Column(name = "blocked_at")
+    private OffsetDateTime blockedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberStatus status;
@@ -81,6 +84,11 @@ public class LedgerMember {
     public void leaveLedger(){
         this.status = MemberStatus.LEFT;
         this.leftAt = OffsetDateTime.now();
+    }
+
+    public void blockMember(){
+        this.status = MemberStatus.BLOCKED;
+        this.blockedAt = OffsetDateTime.now();
     }
 
     public LedgerMemberId getId() {
@@ -152,4 +160,6 @@ public class LedgerMember {
     }
 
     public OffsetDateTime getLeftAt() { return leftAt; }
+
+    public OffsetDateTime getBlockedAt() {return blockedAt; }
 }
