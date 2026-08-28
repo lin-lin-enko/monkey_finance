@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:15
+    container_name: monkey-db
+    restart: always
+    environment:
+      - POSTGRES_DB=monkey_finance_dev
+      - POSTGRES_USER=monkey_finance_app
+      - POSTGRES_PASSWORD=cfaM00
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  server:
+    build:
+      context: .
+    container_name: monkey-app
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_USERNAME=monkey_finance_app
+      - SPRING_DATASOURCE_PASSWORD=cfaM00
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/monkey_finance_dev
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET=AVbLs1feOlLavDeZVoXJhHi+0zzoesya5SbtR1oBaY7lpzPdbEWUMyU0s2eWglJtFWaNSDhmycFFpVG0vjgqrQ==
+      - EMAIL_PASSWORD=MSShPtC.13
+    depends_on:
+      - db
+      - redis
+
+    develop:
+      watch:
+        - action: sync
+          path: ./build/classes/java/main
+          target: /app/build/classes/java/main
+
+        - action: sync
+          path: ./src/main/resources
+          target: /app/src/main/resources
+
+        - action: rebuild
+          path: build.gradle
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/config:/usr/local/etc/redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:

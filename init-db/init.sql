@@ -1,0 +1,1 @@
+CREATE SCHEMA IF NOT EXISTS monkey_finance_app_dev;

@@ -1,5 +1,7 @@
 databaseChangeLog:
   - include:
+      file: db/changelog/db.changelog-000_initial_schema.sql
+  - include:
       file: db/changelog/db.changelog-001_baseline_db.yaml
   - include:
       file: db/changelog/db.changelog-002_update_users_fields.yaml

@@ -13,14 +13,26 @@ spring:
       password: devuser123
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/monkey_finance_dev
-    username: monkey_finance_app
+    url: ${DB_URL}
+    username: ${DB_APP_USERNAME}
     password: ${DB_APP_PASSWORD}
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: alina.golyachenko16@gmail.com
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  
   liquibase:
     enabled: true
-    user: monkey_migrate
-    password: ${DB_MIGRATE_PASSWORD}
+    user: ${DB_MIGRATION_USERNAME}
+    password: ${DB_MIGRATION_PASSWORD}
 
   jpa:
     hibernate:
@@ -30,6 +42,8 @@ spring:
       hibernate:
         default_schema: monkey_finance_app_dev
         format_sql: true
+    liquibase:
+      default-schema: monkey_finance_app_dev
 
 jwt:
   secret: ${JWT_SECRET}

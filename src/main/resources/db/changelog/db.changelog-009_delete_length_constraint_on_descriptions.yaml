@@ -5,7 +5,7 @@ databaseChangeLog:
       changes:
         - sql:
             sql: |
-              ALTER TABLE budget_categories DROP CONSTRAINT udget_categories_description_length_check;
+              ALTER TABLE budget_categories DROP CONSTRAINT budget_categories_description_length_check;
               ALTER TABLE budget_categories ALTER COLUMN description DROP NOT NULL;
               ALTER TABLE budgets DROP CONSTRAINT budgets_description_length_check;
               ALTER TABLE goals DROP CONSTRAINT goals_description_length_check;

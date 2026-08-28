@@ -2,6 +2,7 @@ package com.lin.monkey.controller;
 
 import com.lin.monkey.dto.ChangeDefaultLedgerDto;
 import com.lin.monkey.dto.LedgerResponseDto;
+import com.lin.monkey.dto.UserRequestDto;
 import com.lin.monkey.dto.UserResponseDto;
 import com.lin.monkey.exception.UserNotFoundException;
 import com.lin.monkey.model.Ledger;
@@ -46,6 +47,18 @@ public class UserController {
         UserResponseDto dto = UserResponseDto.fromUser(user);
 
         return ResponseEntity.ok(dto);
+    }
+
+    @PatchMapping("/me/settings/account/email")
+    public ResponseEntity<UserResponseDto> changeEmail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid String newEmail
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UserResponseDto userResponseDto = userService.changeEmail(newEmail);
+        return ResponseEntity.ok(userResponseDto);
     }
 
     @PatchMapping("/me/default-ledger")

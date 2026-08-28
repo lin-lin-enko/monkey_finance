@@ -11,6 +11,7 @@ import com.lin.monkey.repository.UsersLedgersRepository;
 import com.lin.monkey.security.CustomUserDetails;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.hibernate.boot.model.source.spi.EmbeddableMapping;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,12 +37,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final LedgerRepository ledgerRepository;
     private final UsersLedgersRepository usersLedgersRepository;
+    private final EmailService emailService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository, EntityManager entityManager) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, LedgerRepository ledgerRepository, UsersLedgersRepository usersLedgersRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerRepository = ledgerRepository;
         this.usersLedgersRepository = usersLedgersRepository;
+        this.emailService = emailService;
     }
 
     /*
@@ -110,6 +113,16 @@ public class UserService {
         user.setDefaultLedgerId(ledgerId);
         User updatedUser = userRepository.save(user);
         return UserResponseDto.fromUser(updatedUser);
+    }
+
+    public UserResponseDto changeEmail(String newEmail) {
+        User user = userRepository.findById(getCurrentUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setEmail(newEmail);
+        userRepository.save(user);
+
+        return UserResponseDto.fromUser(user);
     }
 
     public Optional<User> findByEmail(String email) {

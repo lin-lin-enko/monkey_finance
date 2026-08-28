@@ -25,6 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'io.hypersistence:hypersistence-utils-hibernate-71:3.14.1'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
@@ -32,6 +33,7 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     implementation 'org.liquibase:liquibase-core:4.29.2'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     developmentOnly 'org.springframew' +
             'ork.boot:spring-boot-devtools'
