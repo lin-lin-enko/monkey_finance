@@ -1,0 +1,21 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 010-add-deletion-info-to-ledger-members-table
+        author: alina
+        changes:
+          - addColumn:
+              schemaName: dev
+              tableName: ledger_members
+              columns:
+                - column:
+                    name: deleted_by_user_id
+                    type: uuid
+                    constraints:
+                      foreignKeyName: fk_ledger_members_deleted_by_user
+                      referencedSchemaName: dev
+                      referencedTableName: users
+                      referencedColumnNames: id
+                      onDelete: CASCADE
+                - column:
+                    name: deleted_at
+                    type: timestamptz

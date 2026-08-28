@@ -53,6 +53,13 @@ public class LedgerMember {
     @JoinColumn(name = "blocked_by_user_id")
     private User blockedByUser;
 
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deleted_by_user_id")
+    private User deletedByUser;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberStatus status;
@@ -90,6 +97,18 @@ public class LedgerMember {
         this.status = MemberStatus.BLOCKED;
         this.blockedAt = OffsetDateTime.now();
         this.blockedByUser = blockedByUser;
+    }
+
+    public void unblockMember(){
+        this.status = MemberStatus.ACTIVE;
+        this.blockedAt = null;
+        this.blockedByUser = null;
+    }
+
+    public void deleteMember(User deletedByUser){
+        this.status = MemberStatus.DELETED;
+        this.deletedAt = OffsetDateTime.now();
+        this.deletedByUser = deletedByUser;
     }
 
     public LedgerMemberId getId() {
@@ -162,5 +181,17 @@ public class LedgerMember {
 
     public void setBlockedByUser(User blockedByUser) {
         this.blockedByUser = blockedByUser;
+    }
+
+    public User getDeletedByUser() {
+        return deletedByUser;
+    }
+
+    public void setDeletedByUser(User deletedByUser) {
+        this.deletedByUser = deletedByUser;
+    }
+
+    public OffsetDateTime getDeletedAt() {
+        return deletedAt;
     }
 }

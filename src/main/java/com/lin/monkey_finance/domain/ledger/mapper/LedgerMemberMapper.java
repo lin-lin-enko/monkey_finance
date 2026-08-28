@@ -14,6 +14,7 @@ public interface LedgerMemberMapper {
     @Mapping(target = "status", source = "ledgerMember.status")
     @Mapping(target = "invitedByUserId", source = "ledgerMember.invitedByUser.id")
     @Mapping(target = "blockedByUserId", source = "ledgerMember.blockedByUser.id")
+    @Mapping(target = "deletedByUserId", source = "ledgerMember.deletedByUser.id")
     LedgerMemberResponseDto toResponseDto(LedgerMember ledgerMember);
 
     @Mapping(target = "ledgerId", source = "ledgerMember.id.ledgerId")

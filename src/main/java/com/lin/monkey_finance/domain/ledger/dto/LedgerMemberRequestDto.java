@@ -9,6 +9,5 @@ import java.util.UUID;
 //Used for adding a member to the ledger members table and requesting user to accept the invitation
 public record LedgerMemberRequestDto(
     UUID userId,
-    AccessType accessType,
-    OffsetDateTime invitedAt
+    AccessType accessType
 ){}

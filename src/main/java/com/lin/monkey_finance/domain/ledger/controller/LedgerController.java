@@ -1,6 +1,7 @@
 package com.lin.monkey_finance.domain.ledger.controller;
 
 import com.lin.monkey_finance.domain.ledger.dto.*;
+import com.lin.monkey_finance.domain.ledger.model.AccessType;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -120,5 +122,53 @@ public class LedgerController {
         UUID userId = UUID.fromString(jwt.getSubject());
         LedgerMemberResponseDto responseDto = ledgerMemberService.block(ledgerId, targetUserId, userId);
         return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/{ledgerId}/members/{targetUserId}/unblock")
+    public ResponseEntity<LedgerMemberResponseDto> unblock(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        LedgerMemberResponseDto responseDto = ledgerMemberService.unblock(ledgerId, targetUserId, userId);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/{ledgerId}/members/{targetUserId}/change-access")
+    public ResponseEntity<LedgerMemberResponseDto> changeAccess(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody Map<String, String> body
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        String accessType = body.get("accessType");
+        AccessType targetAccessType = AccessType.fromString(accessType);
+
+        LedgerMemberResponseDto responseDto = ledgerMemberService.changeAccess(ledgerId, targetUserId, userId, targetAccessType);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @DeleteMapping("/{ledgerId}/members/invitations/{targetUserId}")
+    public ResponseEntity<String> revokeInvitation(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        ledgerMemberService.revokeInvitation(ledgerId, targetUserId, userId);
+        return ResponseEntity.ok("Invitation successfully revoked for user " + targetUserId);
+    }
+
+    @DeleteMapping("/{ledgerId}/members/{targetUserId}")
+    public ResponseEntity<String> delete(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        ledgerMemberService.deleteMember(ledgerId, targetUserId, userId);
+        return ResponseEntity.ok("User " + targetUserId + " was successfully deleted from the ledger");
     }
 }

@@ -27,7 +27,7 @@ public class Ledger {
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "creator_id", nullable = false)
+    @Column(name = "creator_id", nullable = false, updatable = false)
     private UUID creatorId;
 
     @OneToMany(mappedBy = "ledger")
@@ -69,10 +69,6 @@ public class Ledger {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatorId(UUID creatorId) {
-        this.creatorId = creatorId;
     }
 
     public UUID getCreatorId() {

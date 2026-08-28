@@ -16,5 +16,7 @@ public record LedgerMemberResponseDto(
         OffsetDateTime joinedAt,
         OffsetDateTime leftAt,
         OffsetDateTime blockedAt,
-        UUID blockedByUserId
+        UUID blockedByUserId,
+        OffsetDateTime deletedAt,
+        UUID deletedByUserId
 ) {}
