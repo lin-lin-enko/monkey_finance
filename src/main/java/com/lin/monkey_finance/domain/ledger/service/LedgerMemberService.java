@@ -15,12 +15,15 @@ import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
 import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -32,6 +35,8 @@ public class LedgerMemberService {
     private final LedgerMemberMapper ledgerMemberMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final LedgerActivityLogRepository activityLogRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(LedgerMemberService.class);
 
     public LedgerMemberService(
             UserRepository userRepository,
@@ -50,62 +55,60 @@ public class LedgerMemberService {
     }
 
     @Transactional
-    public LedgerMemberResponseDto add(LedgerMemberRequestDto requestDto, UUID ledgerId, UUID authorizedUserId){
-        if (!ledgerRepository.existsById(ledgerId)){
+    public LedgerMemberResponseDto add(LedgerMemberRequestDto requestDto, UUID ledgerId, UUID authorizedUserId) {
+        if (!ledgerRepository.existsById(ledgerId)) {
             throw new ResourceNotFoundException("No ledger with such id");
         }
-
-        LedgerMember userMembership = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new AccessDeniedException("Authorized user is not a member of this ledger"));
-        if (userMembership.getAccessType() != AccessType.ADMIN && userMembership.getAccessType() != AccessType.OWNER){
-            throw new InsufficientPermissionsException("Authorized user doesn't have permission to add new members");
-        }
-
-        User authorizedUser = userRepository.findById(authorizedUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
-
-        User targetUser = userRepository.findById(requestDto.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
         Ledger ledger = ledgerRepository.getReferenceById(ledgerId);
 
-        if (!ledgerMemberRepository.existsById(new LedgerMemberId(ledgerId, requestDto.userId()))){
-            LedgerMember targetMember = new LedgerMember(
+        LedgerMember authorizedMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
+                .orElseThrow(() -> new AccessDeniedException("Authorized user is not a member of this ledger"));
+        if (authorizedMember.getAccessType() != AccessType.ADMIN && authorizedMember.getAccessType() != AccessType.OWNER) {
+            throw new InsufficientPermissionsException("Authorized user doesn't have permission to invite new members");
+        }
+
+        User authorizedUser = authorizedMember.getUser();
+
+        Optional<LedgerMember> targetMemberOptional = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, requestDto.userId()));
+        LedgerMember targetMember;
+        if (targetMemberOptional.isEmpty()){
+            User targetUser = userRepository.findById(requestDto.userId())
+                    .orElseThrow(() -> new ResourceNotFoundException("No user with such id"));
+            targetMember = new LedgerMember(
                     ledger,
                     targetUser,
                     false,
                     requestDto.accessType(),
                     authorizedUser,
                     MemberStatus.PENDING);
-            LedgerMember savedLedgerMember = ledgerMemberRepository.saveAndFlush(targetMember);
-            LedgerMemberInvitationDto invitationDto = ledgerMemberMapper.toInvitationDto(savedLedgerMember, ledger);
-        }
-        else if (ledgerMemberRepository.existsById(new LedgerMemberId(ledgerId, requestDto.userId()){
-            LedgerMember
-            if(targetMember.getStatus() != MemberStatus.DELETED && targetMember.getStatus() != MemberStatus.LEFT) {
-            throw new ResourceAlreadyExistsException("Target user is already a member of this ledger");
         }
         else{
-            LedgerMember targetMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, requestDto.userId()))
-                    .orElseThrow(() -> new ResourceNotFoundException("No member with such id"));
+            targetMember = targetMemberOptional.get();
+            if (targetMember.getStatus() == MemberStatus.DELETED || targetMember.getStatus() == MemberStatus.LEFT) {
+                targetMember.setStatus(MemberStatus.PENDING);
+                targetMember.setAccessType(requestDto.accessType());
+            }
+            else throw new ResourceAlreadyExistsException("Target user is already a member of this ledger or was blocked");
         }
 
-        final String targetUserId = targetUser.getId().toString();
+        LedgerMember savedLedgerMember = ledgerMemberRepository.saveAndFlush(targetMember);
+        LedgerMemberInvitationDto invitationDto = ledgerMemberMapper.toInvitationDto(savedLedgerMember, ledger);
 
-        if (TransactionSynchronizationManager.isActualTransactionActive()){
+        final String targetUserId = targetMember.getUser().getId().toString();
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {
                         @Override
-                        public void afterCommit(){
-                            try{
+                        public void afterCommit() {
+                            try {
                                 messagingTemplate.convertAndSendToUser(
                                         targetUserId,
                                         "/queue/invitations",
                                         invitationDto
                                 );
-                            }
-                            catch (Exception e){
-                                System.err.println("Message in afterCommit wasn't sent: " + e.getMessage());
-                                e.printStackTrace();
+                            } catch (Exception e) {
+                                log.error("Message in afterCommit wasn't sent. {}", e.getMessage(), e);
                             }
                         }
                     }
@@ -191,64 +194,58 @@ public class LedgerMemberService {
 
     @Transactional
     public LedgerMemberResponseDto block(UUID ledgerId, UUID targetUserId, UUID authorizedUserId){
-        LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
-        if (!userRepository.existsById(authorizedUserId)){
-            throw new ResourceNotFoundException("Authorized user not found");
-        }
-        User authorizedUser = userRepository.getReferenceById(authorizedUserId);
-        LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
+            LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
+                    .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
+
+            LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
+                    .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or wasn't found"));
 
 
-        if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
-            throw new AccessDeniedException("Only owners and admins can block users");
-        }
+            if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN) {
+                throw new InsufficientPermissionsException("Only owners and admins can block users");
+            }
 
-        if (targetLedgerMember.getAccessType() == AccessType.OWNER){
-            throw new AccessDeniedException("An owner can't be blocked");
-        }
+            if (targetLedgerMember.getAccessType() == AccessType.OWNER) {
+                throw new InsufficientPermissionsException("An owner can't be blocked");
+            }
 
-        if (targetLedgerMember.getStatus() == MemberStatus.BLOCKED){
-            throw new InvalidStateException("Target user is already blocked");
-        }
+            if (targetLedgerMember.getStatus() == MemberStatus.BLOCKED) {
+                throw new InvalidStateException("Target user is already blocked");
+            }
 
-        if (targetLedgerMember.getStatus() != MemberStatus.ACTIVE){
-            throw new InvalidStateException("Target user is not a member of this ledger yet");
-        }
+            if (targetLedgerMember.getStatus() != MemberStatus.ACTIVE) {
+                throw new InvalidStateException("Target user is not a member of this ledger yet");
+            }
 
-        targetLedgerMember.blockMember(authorizedUser);
+            targetLedgerMember.blockMember(authorizedLedgerMember.getUser());
 
-        LedgerActivityLog activityLog = new LedgerActivityLog(
-            targetLedgerMember.getLedger(),
-            authorizedUser,
-            targetLedgerMember.getUser().getId(),
-            LedgerActionType.MEMBER_BLOCKED,
-  null);
-        activityLogRepository.save(activityLog);
-        return ledgerMemberMapper.toResponseDto(targetLedgerMember);
+            LedgerActivityLog activityLog = new LedgerActivityLog(
+                    targetLedgerMember.getLedger(),
+                    authorizedLedgerMember.getUser(),
+                    targetLedgerMember.getUser().getId(),
+                    LedgerActionType.MEMBER_BLOCKED,
+                    null);
+            activityLogRepository.save(activityLog);
+            return ledgerMemberMapper.toResponseDto(targetLedgerMember);
     }
 
     @Transactional
     public LedgerMemberResponseDto unblock(UUID ledgerId, UUID targetUserId, UUID authorizedUserId){
         LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
                 .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
-        if (!userRepository.existsById(authorizedUserId)){
-            throw new ResourceNotFoundException("Authorized user not found");
-        }
-        LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
 
+        LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
+                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or wasn't found"));
 
         if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
-            throw new AccessDeniedException("Only owners and admins can unblock users");
+            throw new InsufficientPermissionsException("Only owners and admins can unblock users");
         }
 
         if (targetLedgerMember.getStatus() != MemberStatus.BLOCKED){
             throw new InvalidStateException("This user isn't blocked");
         }
 
-        User authorizedUser = userRepository.getReferenceById(authorizedUserId);
+        User authorizedUser = authorizedLedgerMember.getUser();
         targetLedgerMember.unblockMember();
         LedgerActivityLog activityLog = new LedgerActivityLog(
                 targetLedgerMember.getLedger(),
@@ -266,14 +263,12 @@ public class LedgerMemberService {
     public LedgerMemberResponseDto changeAccess(UUID ledgerId, UUID targetUserId, UUID authorizedUserId, AccessType targetAccessType){
         LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
                 .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
-        if (!userRepository.existsById(authorizedUserId)){
-            throw new ResourceNotFoundException("Authorized user not found");
-        }
+
         LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
+                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or wasn't found"));
 
         if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
-            throw new AccessDeniedException("Only owners and admins can change user's access");
+            throw new InsufficientPermissionsException("Only owners and admins can change user's access");
         }
 
         if (targetLedgerMember.getStatus() != MemberStatus.ACTIVE){
@@ -281,7 +276,7 @@ public class LedgerMemberService {
         }
 
         if (targetLedgerMember.getAccessType() == AccessType.OWNER){
-            throw new AccessDeniedException("The owner's access can't be revoked this way");
+            throw new InsufficientPermissionsException("The owner's access can't be revoked this way");
         }
 
         if (targetLedgerMember.getAccessType() == targetAccessType){
@@ -304,14 +299,12 @@ public class LedgerMemberService {
     public void revokeInvitation(UUID ledgerId, UUID targetUserId, UUID authorizedUserId){
         LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
                 .orElseThrow(() -> new ResourceNotFoundException("Target user wasn't invited to this ledger"));
-        if (!userRepository.existsById(authorizedUserId)){
-            throw new ResourceNotFoundException("Authorized user not found");
-        }
+
         LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
+                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or wasn't found"));
 
         if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
-            throw new AccessDeniedException("Only owners and admins can revoke an invitation");
+            throw new InsufficientPermissionsException("Only owners and admins can revoke an invitation");
         }
 
         if (targetLedgerMember.getStatus() != MemberStatus.PENDING){
@@ -332,21 +325,24 @@ public class LedgerMemberService {
     public void deleteMember(UUID ledgerId, UUID targetUserId, UUID authorizedUserId){
         LedgerMember targetLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
                 .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger"));
-        if (!userRepository.existsById(authorizedUserId)){
-            throw new ResourceNotFoundException("Authorized user not found");
-        }
+
         LedgerMember authorizedLedgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
-                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger"));
+                .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or wasn't found"));
 
         if (authorizedLedgerMember.getAccessType() != AccessType.OWNER && authorizedLedgerMember.getAccessType() != AccessType.ADMIN){
-            throw new AccessDeniedException("Only owners and admins can delete a member");
+            throw new InsufficientPermissionsException("Only owners and admins can delete a member");
         }
 
         if (targetLedgerMember.getStatus() != MemberStatus.ACTIVE){
             throw new InvalidStateException("Can't delete a member, the user's status is " + targetLedgerMember.getStatus());
         }
 
-        ledgerMemberRepository.delete(authorizedLedgerMember);
+        if (targetLedgerMember.getAccessType() == AccessType.OWNER){
+            throw new InsufficientPermissionsException("Can't delete an owner this way. An owner must transfer their ownership my themself");
+        }
+
+        User authorizedUser = authorizedLedgerMember.getUser();
+        targetLedgerMember.deleteMember(authorizedUser);
         LedgerActivityLog activityLog = new LedgerActivityLog(
                 targetLedgerMember.getLedger(),
                 authorizedLedgerMember.getUser(),
@@ -355,4 +351,56 @@ public class LedgerMemberService {
                 "Member was deleted from the ledger");
         activityLogRepository.save(activityLog);
     }
+
+        @Transactional
+        public LedgerMemberResponseDto transferOwnership(UUID authorizedUserId, UUID targetUserId, UUID ledgerId){
+        Ledger ledger = ledgerRepository.findById(ledgerId)
+                .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
+            LedgerMember authorizedMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, authorizedUserId))
+                    .orElseThrow(() -> new ResourceNotFoundException("Authorized user is not a member of this ledger or doesn't exist"));
+            if (authorizedMember.getAccessType() != AccessType.OWNER) throw new InsufficientPermissionsException("Only owners can transfer ownership");
+
+            LedgerMember targetMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, targetUserId))
+                    .orElseThrow(() -> new ResourceNotFoundException("Target user is not a member of this ledger or doesn't exist"));
+
+            if (targetMember.getStatus() != MemberStatus.ACTIVE){
+                throw new InvalidStateException("Can't transfer ownership to a member with a status " + targetMember.getStatus());
+            }
+
+            if (targetMember.equals(authorizedMember)){
+                throw new InvalidStateException("The owner can't transfer ownership to themself");
+            }
+            targetMember.setAccessType(AccessType.OWNER);
+            authorizedMember.setAccessType(AccessType.ADMIN);
+
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                try {
+                                    messagingTemplate.convertAndSendToUser(
+                                            targetUserId.toString(),
+                                            "/queue/notifications",
+                                            "You are now the owner of this ledger " + ledgerId
+                                    );
+                                } catch (Exception e) {
+                                    log.error("Message in afterCommit wasn't sent. {}", e.getMessage(), e);
+                                }
+                            }
+                        }
+                );
+            }
+
+            LedgerActivityLog log = new LedgerActivityLog(
+                    ledger,
+                    authorizedMember.getUser(),
+                    targetUserId,
+                    LedgerActionType.OWNERSHIP_TRANSFERRED,
+                    "The previous owner decided to transfer their ownership. By default, the user who transfers their ownership becomes an admin of the ledger"
+            );
+            activityLogRepository.save(log);
+
+            return ledgerMemberMapper.toResponseDto(targetMember);
+        }
 }

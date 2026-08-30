@@ -151,24 +151,35 @@ public class LedgerController {
     }
 
     @DeleteMapping("/{ledgerId}/members/invitations/{targetUserId}")
-    public ResponseEntity<String> revokeInvitation(
+    public ResponseEntity<Void> revokeInvitation(
             @PathVariable UUID ledgerId,
             @PathVariable UUID targetUserId,
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
         ledgerMemberService.revokeInvitation(ledgerId, targetUserId, userId);
-        return ResponseEntity.ok("Invitation successfully revoked for user " + targetUserId);
+        return ResponseEntity.status(204).build();
     }
 
     @DeleteMapping("/{ledgerId}/members/{targetUserId}")
-    public ResponseEntity<String> delete(
+    public ResponseEntity<Void> delete(
             @PathVariable UUID ledgerId,
             @PathVariable UUID targetUserId,
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
         ledgerMemberService.deleteMember(ledgerId, targetUserId, userId);
-        return ResponseEntity.ok("User " + targetUserId + " was successfully deleted from the ledger");
+        return ResponseEntity.status(204).build();
+    }
+
+    @PatchMapping("/{ledgerId}/members/{targetUserId}/transfer-ownership")
+    public ResponseEntity<LedgerMemberResponseDto> transferOwnership(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID targetUserId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        LedgerMemberResponseDto responseDto = ledgerMemberService.transferOwnership(userId, targetUserId, ledgerId);
+        return ResponseEntity.ok(responseDto);
     }
 }
