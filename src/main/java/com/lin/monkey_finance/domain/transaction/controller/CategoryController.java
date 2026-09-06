@@ -5,6 +5,8 @@ import com.lin.monkey_finance.domain.transaction.service.CategoryService;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,29 +24,42 @@ public class CategoryController {
     }
 
     @GetMapping("/categories/system")
-    public ResponseEntity<List<CategoryResponseDto>> getSystemCategories(){
+    public ResponseEntity<List<CategoryResponseDto>> getSystemCategories(
+    ){
         List<CategoryResponseDto> categories = categoryService.getSystemCategories();
         return ResponseEntity.ok(categories);
     }
 
-    //remake into getLedgerCategories
     @GetMapping("/ledgers/{ledgerId}/categories")
     public ResponseEntity<List<CategoryResponseDto>> getLedgerCategories(
-            @PathVariable UUID ledgerId
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt
             ){
-
-        List<CategoryResponseDto> categories = categoryService.getLedgerCategories(ledgerId);
+        UUID userId = UUID.fromString(jwt.getSubject());
+        List<CategoryResponseDto> categories = categoryService.getLedgerCategories(ledgerId, userId);
         return ResponseEntity.ok(categories);
     }
 
     @PatchMapping("/ledgers/{ledgerId}/categories/{categoryId}")
-    public ResponseEntity<CategoryResponseDto> modifyCategory(
+    public ResponseEntity<CategoryResponseDto> edit(
             @PathVariable UUID ledgerId,
             @PathVariable UUID categoryId,
-            @Valid @RequestBody CategoryRequestDto requestDto
+            @Valid @RequestBody CategoryRequestDto requestDto,
+            @AuthenticationPrincipal Jwt jwt
     ){
-
-        CategoryResponseDto responseDto = categoryService.modifyCategory(ledgerId, categoryId, requestDto);
+        UUID userId = UUID.fromString(jwt.getSubject());
+        CategoryResponseDto responseDto = categoryService.modifyCategory(ledgerId, categoryId, requestDto, userId);
         return ResponseEntity.ok(responseDto);
+    }
+
+    @DeleteMapping("/ledgers/{ledgerId}/categories/{categoryId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        categoryService.deleteCategory(ledgerId, categoryId, userId);
+        return ResponseEntity.status(204).build();
     }
 }
