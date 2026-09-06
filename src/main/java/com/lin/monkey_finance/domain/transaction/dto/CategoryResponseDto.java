@@ -13,6 +13,5 @@ public record CategoryResponseDto(
     String fontColor,
     String iconUrl,
     boolean isSystem,
-    boolean isCustomized,
-    CategoryType categoryType
+    CategoryType type
 ) {}

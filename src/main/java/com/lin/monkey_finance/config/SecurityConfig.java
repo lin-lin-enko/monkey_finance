@@ -74,7 +74,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error",
-                                "/api/v1/ledgers/{ledgerId}/categories/**"
+                                "/api/v1/ledgers/{ledgerId}/categories/**",
+                                "/api/v1/categories/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
