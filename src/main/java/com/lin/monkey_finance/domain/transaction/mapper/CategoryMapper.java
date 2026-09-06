@@ -1,10 +1,9 @@
 package com.lin.monkey_finance.domain.transaction.mapper;
 
-import com.lin.monkey_finance.domain.transaction.dto.CategoryRequestDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryWithSettingsDto;
 import com.lin.monkey_finance.domain.transaction.model.Category;
-import com.lin.monkey_finance.domain.transaction.model.CategorySettings;
 import org.mapstruct.*;
 
 import java.util.UUID;
@@ -72,5 +71,5 @@ public interface CategoryMapper {
     }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateFromDto(CategoryRequestDto dto, @MappingTarget Category category);
+    void updateFromDto(CategoryUpdateDto dto, @MappingTarget Category category);
 }

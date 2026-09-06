@@ -1,11 +1,13 @@
 package com.lin.monkey_finance.domain.transaction.dto;
 
 import com.lin.monkey_finance.domain.transaction.model.CategoryType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
-public record CategoryRequestDto(
+public record CategoryCreateDto(
+    @NotBlank
     @Size(min = 2, max = 50, message = "Category name must be between 2 and 50 characters")
     String name,
 
@@ -21,11 +23,6 @@ public record CategoryRequestDto(
     @Size(max = 255, message = "Icon url can't be longer than 255 characters")
     String iconUrl,
 
-    CategoryType type,
-
-    Boolean isHidden
-) {
-    public CategoryRequestDto{
-        if (isHidden == null) isHidden = false;
-    }
-}
+    @NotNull
+    CategoryType type
+) {}

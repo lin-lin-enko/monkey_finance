@@ -1,6 +1,7 @@
 package com.lin.monkey_finance.domain.transaction.controller;
 
-import com.lin.monkey_finance.domain.transaction.dto.CategoryRequestDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryCreateDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.service.CategoryService;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
 import jakarta.validation.Valid;
@@ -44,11 +45,11 @@ public class CategoryController {
     public ResponseEntity<CategoryResponseDto> edit(
             @PathVariable UUID ledgerId,
             @PathVariable UUID categoryId,
-            @Valid @RequestBody CategoryRequestDto requestDto,
+            @Valid @RequestBody CategoryUpdateDto requestDto,
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        CategoryResponseDto responseDto = categoryService.modifyCategory(ledgerId, categoryId, requestDto, userId);
+        CategoryResponseDto responseDto = categoryService.edit(ledgerId, categoryId, requestDto, userId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -59,7 +60,18 @@ public class CategoryController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        categoryService.deleteCategory(ledgerId, categoryId, userId);
+        categoryService.delete(ledgerId, categoryId, userId);
         return ResponseEntity.status(204).build();
+    }
+
+    @PostMapping("/ledgers/{ledgerId}/categories")
+    public ResponseEntity<CategoryResponseDto> create(
+            @PathVariable UUID ledgerId,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CategoryCreateDto requestDto
+    ){
+        UUID userId = UUID.fromString(jwt.getSubject());
+        CategoryResponseDto responseDto = categoryService.create(ledgerId, userId, requestDto);
+        return ResponseEntity.ok(responseDto);
     }
 }

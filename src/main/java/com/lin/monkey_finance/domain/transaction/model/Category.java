@@ -23,7 +23,7 @@ public class Category {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Size(max = 128, message = "Description can't be longer than 255 characters")
+    @Size(max = 255, message = "Description can't be longer than 255 characters")
     @Column(length = 255)
     private String description;
 

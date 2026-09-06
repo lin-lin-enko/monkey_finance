@@ -8,7 +8,8 @@ import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
 import com.lin.monkey_finance.domain.ledger.model.LedgerMemberId;
 import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
-import com.lin.monkey_finance.domain.transaction.dto.CategoryRequestDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryCreateDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryWithSettingsDto;
 import com.lin.monkey_finance.domain.transaction.mapper.CategoryMapper;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -63,7 +63,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResponseDto modifyCategory(UUID ledgerId, UUID categoryId, CategoryRequestDto dto, UUID userId){
+    public CategoryResponseDto edit(UUID ledgerId, UUID categoryId, CategoryUpdateDto dto, UUID userId){
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
@@ -77,7 +77,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("No category with such id"));
 
-        if (category.getLedger() != null && category.getLedger().getId().equals(currentMember.getLedger().getId()))
+        if (category.getLedger() != null && !category.getLedger().getId().equals(currentMember.getLedger().getId()))
             throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
 
         if (category.isSystem()){
@@ -111,7 +111,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public void deleteCategory(UUID ledgerId, UUID categoryId, UUID userId){
+    public void delete(UUID ledgerId, UUID categoryId, UUID userId){
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
@@ -129,9 +129,35 @@ public class CategoryService {
                     .ifPresent(settingsRepository::delete);
         }
         else {
-             if (category.getLedger() != null && category.getLedger().getId().equals(currentMember.getLedger().getId()))
+             if (category.getLedger() != null && !category.getLedger().getId().equals(currentMember.getLedger().getId()))
                  throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
              categoryRepository.delete(category);
         }
+    }
+
+    @Transactional
+    public CategoryResponseDto create(UUID ledgerId, UUID userId, CategoryCreateDto requestDto){
+        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
+
+        if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
+            throw new InsufficientPermissionsException("Only admins and owners can add new categories to the ledger");
+
+        if (currentMember.getStatus() != MemberStatus.ACTIVE)
+            throw new InvalidStateException("User with status " + currentMember.getStatus() + " cannot create new categories");
+
+        Category category = new Category(
+                currentMember.getLedger(),
+                requestDto.name(),
+                requestDto.description(),
+                requestDto.fillColor() != null ? requestDto.fillColor() : "#000000",
+                requestDto.fontColor() != null ? requestDto.fontColor() : "#ffffff",
+                requestDto.iconUrl(),
+                false,
+                requestDto.type()
+        );
+
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toResponseDto(savedCategory);
     }
 }

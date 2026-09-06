@@ -1,6 +1,6 @@
 package com.lin.monkey_finance.domain.transaction.mapper;
 
-import com.lin.monkey_finance.domain.transaction.dto.CategoryRequestDto;
+import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.model.CategorySettings;
 import org.mapstruct.*;
 
@@ -15,5 +15,5 @@ public interface CategorySettingsMapper {
     @Mapping(target = "customFontColor", source = "dto.fontColor")
     @Mapping(target = "customIconUrl", source = "dto.iconUrl")
     @Mapping(target = "hidden", source = "dto.isHidden")
-    void updateFromDto(CategoryRequestDto dto, @MappingTarget CategorySettings settings);
+    void updateFromDto(CategoryUpdateDto dto, @MappingTarget CategorySettings settings);
 }
