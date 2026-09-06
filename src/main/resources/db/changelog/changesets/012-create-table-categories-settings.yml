@@ -1,0 +1,52 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 012-create-table-categories-settings
+        author: alina
+        changes:
+          - createTable:
+              schemaName: dev
+              tableName: categories_settings
+              columns:
+                - column:
+                    name: ledger_id
+                    type: uuid
+                    constraints:
+                      nullable: false
+                      foreignKeyName: fk_categories_settings_ledger
+                      referencedSchemaName: dev
+                      referencedTableName: ledgers
+                      referencedColumnNames: id
+                - column:
+                    name: category_id
+                    type: uuid
+                    constraints:
+                      nullable: false
+                      foreignKeyName: fk_categories_settings_category
+                      referencedSchemaName: dev
+                      referencedTableName: categories
+                      referencedColumnNames: id
+                - column:
+                    name: custom_name
+                    type: varchar(50)
+                - column:
+                    name: custom_description
+                    type: varchar(255)
+                - column:
+                    name: custom_fill_color
+                    type: varchar(7)
+                - column:
+                    name: custom_font_color
+                    type: varchar(7)
+                - column:
+                    name: custom_icon_url
+                    type: varchar(255)
+                - column:
+                    name: is_hidden
+                    type: boolean
+                    defaultValueBoolean: false
+
+          - addPrimaryKey:
+              schemaName: dev
+              tableName: categories_settings
+              columnNames: ledger_id, category_id
+              constraintName: pk_categories_settings

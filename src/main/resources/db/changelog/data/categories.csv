@@ -1,0 +1,30 @@
+id,name,description,fill_color,font_color,icon_url,is_system,type
+gen_random_uuid(),Groceries,"Food, groceries, backed goods, botteled drinks",#D5FCBB,#1D4403,https://cdn-icons-png.flaticon.com/512/3724/3724720.png,TRUE,EXPENSE
+gen_random_uuid(),Cafés and restaurants,"All food you eat outside of your home. You can also include takeout here",#FCDFBB,#704005,https://cdn-icons-png.flaticon.com/512/2935/2935395.png,TRUE,EXPENSE
+gen_random_uuid(),Transport,"Taxi, bus, train - means of getting somewhere when while not using your own transport",#BBCDFC,#052470,https://cdn-icons-png.flaticon.com/512/1165/1165924.png,TRUE,EXPENSE
+gen_random_uuid(),Auto,"Everything for using your auto: oil, fuel, antifreeze, parking, repairing",#BBEAFC,#055470,https://cdn-icons-png.flaticon.com/512/2087/2087658.png,TRUE,EXPENSE
+gen_random_uuid(),Housing,"Rent, house taxes, but not utility costs",#FCF5BB,#706505,https://png.pngtree.com/png-vector/20221110/ourmid/pngtree-thin-line-house-icon-isolated-on-white-background-vector-png-image_40618990.jpg,TRUE,EXPENSE
+gen_random_uuid(),Utility costs,"Gas, electricity, water costs and other",#FFCC8A,#754200,https://cdn-icons-png.flaticon.com/512/917/917647.png,TRUE,EXPENSE
+gen_random_uuid(),Clothes and shoes,"Clothing, shoes, accessories - everything you use to put on yourself",#FEE7EC,#9C072A,https://cdn-icons-png.flaticon.com/512/4804/4804045.png,TRUE,EXPENSE
+gen_random_uuid(),Entertainment,"Movies, games, hobbies",#F6BBFC,#3F0344,https://www.svgrepo.com/show/447992/entertainment.svg,TRUE,EXPENSE
+gen_random_uuid(),Health,"Medicine, dentist, medical procedures, consultations",#BBFCEE,#034436,https://cdn-icons-png.flaticon.com/512/88/88081.png,TRUE,EXPENSE
+gen_random_uuid(),Sport,"Gym, yoga, sports equipment - everything that helps you do sports",#DFFA8F,#344403,https://static.thenounproject.com/png/835259-200.png,TRUE,EXPENSE
+gen_random_uuid(),Beauty,"Skincare, haircare, barbershops - things that help you look better",#FCBBDD,#70053E,https://cdn-icons-png.flaticon.com/512/6187/6187141.png,TRUE,EXPENSE
+gen_random_uuid(),Education,"Courses, trainings, books",#BA8FFA,#1D0344,https://www.clipartmax.com/png/middle/19-193869_education-icon-education-icon.png,TRUE,EXPENSE
+gen_random_uuid(),Subscriptions and services,"The name pretty much summarizes it",#FF8A8A,#470000,https://cdn-icons-png.flaticon.com/512/1865/1865084.png,TRUE,EXPENSE
+gen_random_uuid(),Gifts,"The name pretty much summarizes it",#FF8ACC,#470028,https://cdn-icons-png.flaticon.com/512/241/241509.png,TRUE,EXPENSE
+gen_random_uuid(),Charity,"Dontaions to the women's shelters, humanitarian causes, kids with illnesses, research etc",#8AFFB1,#004718,https://cdn-icons-png.flaticon.com/512/620/620806.png,TRUE,EXPENSE
+gen_random_uuid(),Salary,"One of the most wished things in your month",#90FF8A,#044700,https://cdn-icons-png.flaticon.com/512/3791/3791153.png,TRUE,INCOME
+gen_random_uuid(),Return on investments,"Basically the money you receive by giving someone money: return of investment, deposit percentage etc",#FFE88A,#755E00,https://cdn-icons-png.flaticon.com/512/6475/6475946.png,TRUE,INCOME
+gen_random_uuid(),Other expenses,"The expenses you can't quite categorize",#B8F3FF,#003B47,https://cdn-icons-png.flaticon.com/512/5895/5895032.png,TRUE,EXPENSE
+gen_random_uuid(),Loans given,"When you give money to someone, expecting to get them back",#FFD88A,#473000,https://cdn-icons-png.flaticon.com/512/2660/2660135.png,TRUE,EXPENSE
+gen_random_uuid(),Loan repayment received,"Money you get back from when you gave it to someone",#8AFF9B,#00470B,https://static.thenounproject.com/png/4814670-200.png,TRUE,INCOME
+gen_random_uuid(),Borrowed money,"Money you get with an intent to give them back",#FF7C5C,#470E00,https://cdn-icons-png.flaticon.com/512/6914/6914980.png,TRUE,INCOME
+gen_random_uuid(),Debt repayment,"When you repay the money you got as a loan",#DCFF5C,#384700,https://cdn-icons-png.flaticon.com/512/5525/5525088.png,TRUE,EXPENSE
+gen_random_uuid(),Savings,"Money you save for a special purchase/occasion",#8AFFAD,#004715,https://cdn-icons-png.flaticon.com/512/2746/2746077.png,TRUE,TRANSFER
+gen_random_uuid(),Side hustles,"Money you get for doing something other than your main job",#8AFFFF,#004747,https://png.pngtree.com/png-vector/20230225/ourmid/pngtree-freelance-line-icon-png-image_6618779.png,TRUE,INCOME
+gen_random_uuid(),Taxes and fees,"Things that we don't like to pay but they do good things for us",#FFE08A,#473400,https://cdn-icons-png.flaticon.com/512/4629/4629506.png,TRUE,EXPENSE
+gen_random_uuid(),Investment,"When you give money or purchase something with an intent to get a procent of money in the future",#5C6FFF,#000847,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMRck3FT1lY4Ee1k5wgYJGJ24XEIDXz-_ipF4seUl8gGfanfELo-UFKEE&s=10,TRUE,EXPENSE
+gen_random_uuid(),Other income,"The income you can't quite categorize",#B8F3FF,#003B47,https://cdn-icons-png.flaticon.com/512/5895/5895032.png,TRUE,INCOME
+gen_random_uuid(),Baby or kid,"Money you spend on your kids",#ffb0e3,#960062,https://cdn-icons-png.flaticon.com/512/2176/2176706.png,TRUE,EXPENSE
+gen_random_uuid(),Pet,"Money you spend on your fluffy friend",#e8c599,#613909,https://www.svgrepo.com/show/29317/pets.svg,TRUE,EXPENSE

@@ -1,0 +1,59 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 011-create-table-categories
+        author: alina
+        changes:
+          - createTable:
+              schemaName: dev
+              tableName: categories
+              columns:
+                - column:
+                    name: id
+                    type: uuid
+                    defaultValueComputed: "gen_random_uuid()"
+                    constraints:
+                      primaryKey: true
+                      nullable: false
+                - column:
+                    name: ledger_id
+                    type: uuid
+                    constraints:
+                      foreignKeyName: fk_categories_ledger
+                      referencedSchemaName: dev
+                      referencedTableName: ledgers
+                      referencedColumnNames: id
+                - column:
+                    name: name
+                    type: varchar(50)
+                    constraints:
+                      nullable: false
+                - column:
+                    name: description
+                    type: varchar(255)
+                - column:
+                    name: fill_color
+                    type: varchar(7)
+                    defaultValue: '#000000'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: font_color
+                    type: varchar(7)
+                    defaultValue: '#ffffff'
+                    constraints:
+                      nullable: false
+                - column:
+                    name: icon_url
+                    type: varchar(255)
+                - column:
+                    name: is_system
+                    type: boolean
+                    defaultValueBoolean: true
+                    constraints:
+                      nullable: false
+                - column:
+                    name: type
+                    type: varchar(20)
+                    defaultValue: 'EXPENSE'
+                    constraints:
+                      nullable: false

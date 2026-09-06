@@ -1,0 +1,36 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 013-load-system-categories
+        author: alina
+        changes:
+          - loadData:
+              file: ../data/categories.csv
+              encoding: UTF-8
+              schemaName: dev
+              tableName: categories
+              relativeToChangelogFile: true
+              columns:
+                - column:
+                      name: id
+                      type: COMPUTED
+                - column:
+                      name: name
+                      type: STRING
+                - column:
+                      name: description
+                      type: STRING
+                - column:
+                      name: fill_color
+                      type: STRING
+                - column:
+                      name: font_color
+                      type: STRING
+                - column:
+                      name: icon_url
+                      type: STRING
+                - column:
+                      name: is_system
+                      type: BOOLEAN
+                - column:
+                      name: type
+                      type: STRING

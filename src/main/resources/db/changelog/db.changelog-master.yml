@@ -19,3 +19,9 @@ databaseChangeLog:
       file: db/changelog/changesets/009-create-ledger-activity-logs-table.yml
   - include:
       file: db/changelog/changesets/010-add-deletion-info-to-ledger-members-table.yml
+  - include:
+      file: db/changelog/changesets/011-create-table-categories.yml
+  - include:
+      file: db/changelog/changesets/012-create-table-categories-settings.yml
+  - include:
+      file: db/changelog/changesets/013-load-system-categories.yml
