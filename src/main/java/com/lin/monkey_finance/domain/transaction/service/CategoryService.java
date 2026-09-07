@@ -3,15 +3,10 @@ package com.lin.monkey_finance.domain.transaction.service;
 import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
 import com.lin.monkey_finance.common.exception.InvalidStateException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
-import com.lin.monkey_finance.domain.ledger.model.AccessType;
-import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
-import com.lin.monkey_finance.domain.ledger.model.LedgerMemberId;
-import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
+import com.lin.monkey_finance.domain.ledger.model.*;
+import com.lin.monkey_finance.domain.ledger.repository.LedgerActivityLogRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
-import com.lin.monkey_finance.domain.transaction.dto.CategoryCreateDto;
-import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
-import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
-import com.lin.monkey_finance.domain.transaction.dto.CategoryWithSettingsDto;
+import com.lin.monkey_finance.domain.transaction.dto.*;
 import com.lin.monkey_finance.domain.transaction.mapper.CategoryMapper;
 import com.lin.monkey_finance.domain.transaction.mapper.CategorySettingsMapper;
 import com.lin.monkey_finance.domain.transaction.model.Category;
@@ -22,6 +17,7 @@ import com.lin.monkey_finance.domain.transaction.repository.CategorySettingsRepo
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,19 +28,22 @@ public class CategoryService {
     private final CategorySettingsRepository settingsRepository;
     private final CategorySettingsMapper settingsMapper;
     private final LedgerMemberRepository memberRepository;
+    private final LedgerActivityLogRepository activityLogRepository;
 
     public CategoryService(
             CategoryRepository categoryRepository,
             CategoryMapper categoryMapper,
             CategorySettingsRepository settingsRepository,
             CategorySettingsMapper settingsMapper,
-            LedgerMemberRepository memberRepository
+            LedgerMemberRepository memberRepository,
+            LedgerActivityLogRepository activityLogRepository
     ){
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
         this.settingsRepository = settingsRepository;
         this.settingsMapper = settingsMapper;
         this.memberRepository = memberRepository;
+        this.activityLogRepository = activityLogRepository;
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +62,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResponseDto edit(UUID ledgerId, UUID categoryId, CategoryUpdateDto dto, UUID userId){
+    public CategoryResponseDto editCategory(UUID ledgerId, UUID categoryId, CategoryUpdateDto dto, UUID userId){
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
@@ -84,6 +83,14 @@ public class CategoryService {
             CategorySettings categorySettings = settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
                     .map(existingSettings -> {
                         settingsMapper.updateFromDto(dto, existingSettings);
+                        LedgerActivityLog activityLog = new LedgerActivityLog(
+                                currentMember.getLedger(),
+                                currentMember.getUser(),
+                                categoryId,
+                                LedgerActionType.CATEGORY_EDITED,
+                                "Category settings were edited"
+                        );
+                        activityLogRepository.save(activityLog);
                         return existingSettings;
                     })
                     .orElseGet(() -> {
@@ -97,6 +104,14 @@ public class CategoryService {
                                 dto.iconUrl() != null ? dto.iconUrl() : category.getIconUrl(),
                                 Boolean.TRUE.equals(dto.isHidden())
                         );
+                        LedgerActivityLog activityLog = new LedgerActivityLog(
+                                currentMember.getLedger(),
+                                currentMember.getUser(),
+                                categoryId,
+                                LedgerActionType.CATEGORY_SETTINGS_ADDED,
+                                "Category settings were added"
+                        );
+                        activityLogRepository.save(activityLog);
                         return settingsRepository.save(newSettings);
                     });
             return categoryMapper.toResponseDto(new CategoryWithSettingsDto(category, categorySettings));
@@ -105,13 +120,21 @@ public class CategoryService {
             if(category.getLedger() == null || !category.getLedger().getId().equals(ledgerId))
                 throw new ResourceNotFoundException("This category is not from this ledger");
             categoryMapper.updateFromDto(dto, category);
+            LedgerActivityLog activityLog = new LedgerActivityLog(
+                    currentMember.getLedger(),
+                    currentMember.getUser(),
+                    categoryId,
+                    LedgerActionType.CATEGORY_EDITED,
+                    "Category \"" + category.getName() + "\" was edited"
+            );
+            activityLogRepository.save(activityLog);
             return categoryMapper.toResponseDto(category);
         }
 
     }
 
     @Transactional
-    public void delete(UUID ledgerId, UUID categoryId, UUID userId){
+    public void deleteCategory(UUID ledgerId, UUID categoryId, UUID userId){
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
@@ -127,16 +150,32 @@ public class CategoryService {
         if (category.isSystem()) {
             settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
                     .ifPresent(settingsRepository::delete);
+            LedgerActivityLog activityLog = new LedgerActivityLog(
+                    currentMember.getLedger(),
+                    currentMember.getUser(),
+                    categoryId,
+                    LedgerActionType.CATEGORY_SETTINGS_DELETED,
+                    "Category settings were deleted"
+            );
+            activityLogRepository.save(activityLog);
         }
         else {
              if (category.getLedger() != null && !category.getLedger().getId().equals(currentMember.getLedger().getId()))
                  throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
-             categoryRepository.delete(category);
+            LedgerActivityLog activityLog = new LedgerActivityLog(
+                    currentMember.getLedger(),
+                    currentMember.getUser(),
+                    categoryId,
+                    LedgerActionType.CATEGORY_DELETED,
+                    "Category " + category.getName() + " was deleted"
+            );
+            activityLogRepository.save(activityLog);
+            categoryRepository.delete(category);
         }
     }
 
     @Transactional
-    public CategoryResponseDto create(UUID ledgerId, UUID userId, CategoryCreateDto requestDto){
+    public CategoryResponseDto createCategory(UUID ledgerId, UUID userId, CategoryCreateDto requestDto){
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
@@ -148,16 +187,134 @@ public class CategoryService {
 
         Category category = new Category(
                 currentMember.getLedger(),
+                null,
                 requestDto.name(),
                 requestDto.description(),
                 requestDto.fillColor() != null ? requestDto.fillColor() : "#000000",
                 requestDto.fontColor() != null ? requestDto.fontColor() : "#ffffff",
                 requestDto.iconUrl(),
                 false,
-                requestDto.type()
+                requestDto.type(),
+                new ArrayList<>()
         );
 
-        Category savedCategory = categoryRepository.save(category);
+        Category savedCategory = categoryRepository.saveAndFlush(category);
+
+        LedgerActivityLog activityLog = new LedgerActivityLog(
+                currentMember.getLedger(),
+                currentMember.getUser(),
+                savedCategory.getId(),
+                LedgerActionType.CATEGORY_CREATED,
+                "Category " + category.getName() + " was created"
+        );
+        activityLogRepository.save(activityLog);
+
         return categoryMapper.toResponseDto(savedCategory);
+    }
+
+    @Transactional
+    public CategoryResponseDto createSubcategory(UUID ledgerId, UUID parentId, UUID userId, SubcategoryCreateDto requestDto){
+        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
+
+        if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
+            throw new InsufficientPermissionsException("Only admins and owners can add new subcategories to the ledger");
+
+        if (currentMember.getStatus() != MemberStatus.ACTIVE)
+            throw new InvalidStateException("User with status " + currentMember.getStatus() + " cannot create new subcategories");
+
+        Category parentCategory = categoryRepository.findById(parentId)
+                .orElseThrow(() -> new ResourceNotFoundException("No category with such id"));
+
+        if (parentCategory.getParent() != null)
+            throw new IllegalArgumentException("Can't create a subcategory of a subcategory");
+
+        if (!parentCategory.isSystem() && (parentCategory.getLedger() == null || !parentCategory.getLedger().getId().equals(ledgerId)))
+            throw new ResourceNotFoundException("This category doesn't belong to this ledger");
+
+        Category subcategory = new Category(
+                currentMember.getLedger(),
+                parentCategory,
+                requestDto.name(),
+                requestDto.description(),
+                parentCategory.getFillColor(),
+                parentCategory.getFontColor(),
+                requestDto.iconUrl(),
+                false,
+                parentCategory.getType(),
+                new ArrayList<>()
+        );
+
+        settingsRepository.findById(new CategorySettingsId(currentMember.getLedger().getId(), parentCategory.getId())).ifPresent(
+                settings -> {
+                    if (settings.getCustomFillColor() != null) subcategory.setFillColor(settings.getCustomFillColor());
+                    if(settings.getCustomFontColor() != null) subcategory.setFontColor(settings.getCustomFontColor());
+                }
+        );
+
+        Category savedSubcategory = categoryRepository.save(subcategory);
+        LedgerActivityLog activityLog = new LedgerActivityLog(
+                currentMember.getLedger(),
+                currentMember.getUser(),
+                parentCategory.getId(),
+                LedgerActionType.SUBCATEGORY_ADDED,
+                "Subcategory " + subcategory.getName() + " was added to the category " + parentCategory.getName()
+        );
+        activityLogRepository.save(activityLog);
+        return categoryMapper.toResponseDto(savedSubcategory);
+    }
+
+    @Transactional
+    public CategoryResponseDto editSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId, SubcategoryUpdateDto updateDto ){
+        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
+
+        if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
+            throw new InsufficientPermissionsException("Only admins and owners can edit subcategories of the ledger");
+
+        if (currentMember.getStatus() != MemberStatus.ACTIVE)
+            throw new InvalidStateException("User with status " + currentMember.getStatus() + " cannot edit subcategories");
+
+        Category subcategory = categoryRepository.findById(subcategoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("No subcategory with such id"));
+        if (!categoryId.equals(subcategory.getParent().getId())) throw new InsufficientPermissionsException("This subcategory doesn't belong to this category");
+
+        categoryMapper.updateFromDto(updateDto, subcategory);
+
+        LedgerActivityLog activityLog = new LedgerActivityLog(
+                currentMember.getLedger(),
+                currentMember.getUser(),
+                subcategoryId,
+                LedgerActionType.SUBCATEGORY_EDITED,
+                "Subcategory was edited"
+        );
+
+        activityLogRepository.save(activityLog);
+        return categoryMapper.toResponseDto(subcategory);
+    }
+
+    public void deleteSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId){
+        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
+
+        if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
+            throw new InsufficientPermissionsException("Only admins and owners can edit subcategories of the ledger");
+
+        if (currentMember.getStatus() != MemberStatus.ACTIVE)
+            throw new InvalidStateException("User with status " + currentMember.getStatus() + " cannot edit subcategories");
+
+        Category subcategory = categoryRepository.findById(subcategoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("No subcategory with such id"));
+        if (!categoryId.equals(subcategory.getParent().getId())) throw new InsufficientPermissionsException("This subcategory doesn't belong to this category");
+
+        categoryRepository.delete(subcategory);
+        LedgerActivityLog activityLog = new LedgerActivityLog(
+                currentMember.getLedger(),
+                currentMember.getUser(),
+                subcategoryId,
+                LedgerActionType.SUBCATEGORY_DELETED,
+                "Subcategory was deleted"
+        );
+        activityLogRepository.save(activityLog);
     }
 }

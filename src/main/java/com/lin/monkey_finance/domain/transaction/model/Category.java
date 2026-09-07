@@ -4,6 +4,8 @@ import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,6 +20,10 @@ public class Category {
     @JoinColumn(name = "ledger_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Ledger ledger;
+
+    @JoinColumn(name = "parent_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Category parent;
 
     @Size(min = 2, max = 50, message = "Category name must be between 2 and 50 characters")
     @Column(nullable = false, length = 50)
@@ -46,26 +52,33 @@ public class Category {
     @Column(nullable = false)
     private CategoryType type = CategoryType.EXPENSE;
 
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    private List<Category> subcategories = new ArrayList<>();
+
     protected Category(){}
 
     public Category(
             Ledger ledger,
+            Category parent,
             String name,
             String description,
             String fillColor,
             String fontColor,
             String iconUrl,
             Boolean isSystem,
-            CategoryType type
+            CategoryType type,
+            List<Category> subcategories
     ){
         this.ledger = ledger;
+        this.parent = parent;
         this.name = name;
         this.description = description;
-        this.fillColor = fillColor;
-        this.fontColor = fontColor;
+        this.fillColor = fillColor != null ? fillColor : "#000000";
+        this.fontColor = fontColor != null ? fontColor : "#ffffff";
         this.iconUrl = iconUrl;
         this.isSystem = isSystem;
         this.type = type;
+        this.subcategories = subcategories;
     }
 
     public UUID getId() {
@@ -78,6 +91,14 @@ public class Category {
 
     public void setLedger(Ledger ledger) {
         this.ledger = ledger;
+    }
+
+    public Category getParent() {
+        return parent;
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
     }
 
     public String getName() {
@@ -134,5 +155,13 @@ public class Category {
 
     public void setType(CategoryType type) {
         this.type = type;
+    }
+
+    public List<Category> getSubcategories() {
+        return subcategories;
+    }
+
+    public void setSubcategories(List<Category> subcategories) {
+        this.subcategories = subcategories;
     }
 }

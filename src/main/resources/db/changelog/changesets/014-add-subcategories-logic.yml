@@ -1,0 +1,24 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 014-add-subcategories-logic
+        author: alina
+        changes:
+          - addColumn:
+              tableName: categories
+              columns:
+                - column:
+                    name: parent_id
+                    type: uuid
+                    constraints:
+                      foreignKeyName: fk_categories_parent
+                      referencedSchemaName: dev
+                      referencedTableName: categories
+                      referencedColumnNames: id
+                      onDelete: CASCADE
+
+          - createIndex:
+              indexName: idx_categories_parent_id
+              tableName: categories
+              columns:
+                - column:
+                    name: parent_id

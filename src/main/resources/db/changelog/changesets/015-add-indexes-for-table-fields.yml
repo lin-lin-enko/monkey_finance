@@ -1,0 +1,39 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 015-add-indexes-for-table-fields
+        author: alina
+        changes:
+          - createIndex:
+              indexName: idx_ledgers_creator_id
+              tableName: ledgers
+              columns:
+                - column:
+                    name: creator_id
+
+          - createIndex:
+              indexName: idx_ledger_activity_logs_ledger_id
+              tableName: ledger_activity_logs
+              columns:
+                - column:
+                    name: ledger_id
+
+          - createIndex:
+              indexName: idx_ledger_activity_logs_actor_id
+              tableName: ledger_activity_logs
+              columns:
+                - column:
+                    name: actor_id
+
+          - createIndex:
+              indexName: idx_ledger_activity_logs_target_id
+              tableName: ledger_activity_logs
+              columns:
+                - column:
+                    name: target_id
+
+          - createIndex:
+              indexName: idx_categories_ledger_id
+              tableName: categories
+              columns:
+                - column:
+                    name: ledger_id

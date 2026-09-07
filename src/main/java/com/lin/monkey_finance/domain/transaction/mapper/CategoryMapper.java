@@ -3,6 +3,7 @@ package com.lin.monkey_finance.domain.transaction.mapper;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryResponseDto;
 import com.lin.monkey_finance.domain.transaction.dto.CategoryWithSettingsDto;
+import com.lin.monkey_finance.domain.transaction.dto.SubcategoryUpdateDto;
 import com.lin.monkey_finance.domain.transaction.model.Category;
 import org.mapstruct.*;
 
@@ -13,6 +14,7 @@ public interface CategoryMapper {
 
     @Mapping(target = "ledgerId", source = "ledger.id")
     @Mapping(target = "isSystem", source = "system")
+    @Mapping(target = "parentId", source = "parent.id")
     CategoryResponseDto toResponseDto(Category category);
 
     @Mapping(target = "id", source = "dto.category.id")
@@ -24,6 +26,8 @@ public interface CategoryMapper {
     @Mapping(target = "iconUrl", expression = "java(resolveIconUrl(dto))")
     @Mapping(target = "isSystem", source = "dto.category.system")
     @Mapping(target = "type", source = "dto.category.type")
+    @Mapping(target = "parentId", source = "dto.category.parent.id")
+    @Mapping(target = "subcategories", source = "dto.category.subcategories")
     CategoryResponseDto toResponseDto(CategoryWithSettingsDto dto);
 
     default UUID resolveLedgerId(CategoryWithSettingsDto dto){
@@ -72,4 +76,7 @@ public interface CategoryMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateFromDto(CategoryUpdateDto dto, @MappingTarget Category category);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateFromDto(SubcategoryUpdateDto dto, @MappingTarget Category subcategory);
 }
