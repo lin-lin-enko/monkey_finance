@@ -91,7 +91,7 @@ public class LedgerService {
             throw new AccessDeniedException("User isn't permitted to edit this ledger");
         }
 
-        ledgerMapper.updateLedgerFromDto(ledgerUpdateDto, ledgerMember.getLedger());
+        ledgerMapper.updateFromDto(ledgerUpdateDto, ledgerMember.getLedger());
 
         return ledgerMapper.toDetailedResponseDto(ledgerMember.getLedger());
 

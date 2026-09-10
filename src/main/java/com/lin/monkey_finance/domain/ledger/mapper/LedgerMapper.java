@@ -13,5 +13,5 @@ public interface LedgerMapper {
     LedgerDetailedResponseDto toDetailedResponseDto(Ledger ledger);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateLedgerFromDto(LedgerUpdateDto ledgerUpdateDto, @MappingTarget Ledger ledger);
+    void updateFromDto(LedgerUpdateDto ledgerUpdateDto, @MappingTarget Ledger ledger);
 }
