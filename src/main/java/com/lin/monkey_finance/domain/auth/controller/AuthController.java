@@ -34,7 +34,7 @@ public class AuthController {
             @RequestBody @Valid UserLoginDto userLoginDto
     ){
         AuthResponseDto authResponseDto = authService.login(userLoginDto);
-        return ResponseEntity.status(HttpStatus.OK).body(authResponseDto);
+        return ResponseEntity.ok(authResponseDto);
     }
 
     @GetMapping("/confirm")

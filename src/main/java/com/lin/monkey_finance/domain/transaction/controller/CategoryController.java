@@ -3,6 +3,7 @@ package com.lin.monkey_finance.domain.transaction.controller;
 import com.lin.monkey_finance.domain.transaction.dto.*;
 import com.lin.monkey_finance.domain.transaction.service.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -70,7 +71,7 @@ public class CategoryController {
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
         CategoryResponseDto responseDto = categoryService.createCategory(ledgerId, userId, requestDto);
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     @PostMapping("/ledgers/{ledgerId}/categories/{categoryId}/subcategories")
@@ -82,7 +83,7 @@ public class CategoryController {
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
         CategoryResponseDto responseDto = categoryService.createSubcategory(ledgerId, categoryId, userId, requestDto);
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     @PatchMapping("/ledgers/{ledgerId}/categories/{categoryId}/subcategories/{subcategoryId}")

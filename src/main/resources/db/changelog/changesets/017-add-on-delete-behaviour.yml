@@ -1,0 +1,32 @@
+  databaseChangeLog:
+    - changeSet:
+        id: 017-add-on-delete-behaviour
+        author: alina
+        changes:
+          - dropForeignKeyConstraint:
+              baseTableSchemaName: dev
+              baseTableName: categories
+              constraintName: fk_categories_ledger
+          - dropForeignKeyConstraint:
+              baseTableSchemaName: dev
+              baseTableName: categories_settings
+              constraintName: fk_categories_settings_category
+
+          - addForeignKeyConstraint:
+              baseTableSchemaName: dev
+              baseTableName: categories
+              baseColumnNames: ledger_id
+              referencedTableSchemaName: dev
+              referencedTableName: ledgers
+              referencedColumnNames: id
+              constraintName: fk_categories_ledger
+              onDelete: CASCADE
+          - addForeignKeyConstraint:
+              baseTableSchemaName: dev
+              baseTableName: categories_settings
+              baseColumnNames: category_id
+              referencedTableSchemaName: dev
+              referencedTableName: categories
+              referencedColumnNames: id
+              constraintName: fk_categories_settings_category
+              onDelete: CASCADE

@@ -5,6 +5,7 @@ import com.lin.monkey_finance.domain.ledger.model.AccessType;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -49,7 +50,7 @@ public class LedgerController {
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
         LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, userId);
-        return ResponseEntity.status(201).body(ledgerDetailedResponseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ledgerDetailedResponseDto);
     }
 
     @PatchMapping("/{ledgerId}")

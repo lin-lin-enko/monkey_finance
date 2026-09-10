@@ -14,6 +14,7 @@ import java.util.UUID;
 @Table(name = "ledgers", schema = "dev")
 public class Ledger {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)
     private UUID id;
 
@@ -41,7 +42,6 @@ public class Ledger {
     protected Ledger(){}
 
     public Ledger(String name, String description, UUID creatorId){
-        this.id = UUID.randomUUID();
         this.name = name;
         this.description = description;
         this.creatorId = creatorId;
