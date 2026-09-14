@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.secret:${JWT_SECRET}}")
+    @Value("${jwt.secret:${JWT_SECRET:some_string_with_jwt_secret_key_for_test_purposes}}")
     private String jwtSecretKey;
 
     @Bean

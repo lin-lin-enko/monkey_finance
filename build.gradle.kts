@@ -32,7 +32,6 @@ extra["springModulithVersion"] = "2.0.6"
 dependencies {
     implementation("org.springframework.boot:spring-boot-micrometer-tracing-brave")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-batch-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-cache")
@@ -69,42 +68,16 @@ dependencies {
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.springframework.modulith:spring-modulith-actuator")
-    runtimeOnly("org.springframework.modulith:spring-modulith-events-amqp")
     runtimeOnly("org.springframework.modulith:spring-modulith-observability")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
-    testImplementation("org.springframework.boot:spring-boot-micrometer-tracing-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-amqp-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-batch-jdbc-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-batch-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-cache-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-liquibase-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-mail-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-opentelemetry-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-quartz-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-restdocs")
-    testImplementation("org.springframework.boot:spring-boot-starter-security-oauth2-client-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-websocket-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
-    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
-    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
-    testImplementation("org.testcontainers:testcontainers-grafana")
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
-    testImplementation("org.testcontainers:testcontainers-postgresql")
-    testImplementation("org.testcontainers:testcontainers-rabbitmq")
-    testImplementation("org.testcontainers:testcontainers-vault")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:testcontainers")
 }
 
 dependencyManagement {
@@ -114,6 +87,7 @@ dependencyManagement {
         mavenBom("org.springframework.modulith:spring-modulith-bom:${property("springModulithVersion")}")
         mavenBom("io.sentry:sentry-bom:${property("sentryVersion")}")
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+        mavenBom("org.testcontainers:testcontainers-bom:1.20.4")
     }
 }
 
@@ -121,10 +95,6 @@ hibernate {
     enhancement {
         enableAssociationManagement = true
     }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
 
 tasks.test {
@@ -136,6 +106,12 @@ tasks.asciidoctor {
     dependsOn(tasks.test)
 }
 
-tasks.named<Test>("test"){
-    enabled = false
+tasks.withType<Test> {
+    useJUnitPlatform()
+    systemProperty("docker.host", "tcp://localhost:2375")
+    systemProperty("testcontainers.docker.client.strategy", "org.testcontainers.dockerclient.TcpClientProviderStrategy")
 }
+
+//tasks.named<Test>("test"){
+//    enabled = false
+//}

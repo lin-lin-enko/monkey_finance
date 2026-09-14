@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: monkey_finance_test
+  liquibase:
+    enabled: true
+    drop-first: true
+    default-schema: dev
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    parameters:
+      author: "monkey-finance"
+  datasource:
+    hikari:
+      connection-timeout: 60000
+      validation-timeout: 10000
+  mail:
+    host: localhost
+    port: 2525
+    username: test-email-user
+    password: test-email-password
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: dev
+  cloud:
+    vault:
+      enabled: false
+
+currency:
+  api:
+    url: https://v6.exchangerate-api.com/v6
+    key: test_api_key
+
+logging:
+  level:
+    liquibase: DEBUG
+    org.springframework.test.context: DEBUG
