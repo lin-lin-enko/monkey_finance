@@ -7,8 +7,8 @@ import com.lin.monkey_finance.domain.account.service.AccountService;
 import com.lin.monkey_finance.domain.auth.service.AuthService;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
-import com.lin.monkey_finance.domain.savings.dto.SavingsCreateDto;
-import com.lin.monkey_finance.domain.savings.dto.SavingsResponseDto;
+import com.lin.monkey_finance.domain.savings.dto.SavingsPotCreateDto;
+import com.lin.monkey_finance.domain.savings.dto.SavingsPotResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.service.EmailService;
@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.*;
 @ActiveProfiles("test")
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
-public class SavingsServiceIntegrationTest {
+public class SavingsPotServiceIntegrationTest {
 
     @Autowired
-    private SavingsService savingsService;
+    private SavingsPotService savingsPotService;
 
     @Autowired
     private AuthService authService;
@@ -81,16 +81,16 @@ public class SavingsServiceIntegrationTest {
     @Test
     @DisplayName("Test if savings creation works")
     void createSavings(){
-        SavingsCreateDto createDto = new SavingsCreateDto(
+        SavingsPotCreateDto createDto = new SavingsPotCreateDto(
                 "Dog",
-                "Savings pot for buying a borzoi doggo",
+                "SavingsPot pot for buying a borzoi doggo",
                 Currency.UAH,
                 new BigDecimal(500),
                 null,
                 null
         );
 
-        SavingsResponseDto responseDto = savingsService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto);
+        SavingsPotResponseDto responseDto = savingsPotService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto);
         assertThat(responseDto).isNotNull();
         assertThat(responseDto.id()).isNotNull();
         assertThat(responseDto.name()).isEqualTo(createDto.name());
@@ -102,7 +102,7 @@ public class SavingsServiceIntegrationTest {
     @Test
     @DisplayName("Test if exceptions are caught when creating a savings pot")
     void testExceptionCatchOnSavingsCreation(){
-        SavingsCreateDto createDto = new SavingsCreateDto(
+        SavingsPotCreateDto createDto = new SavingsPotCreateDto(
                 null,
                 null,
                null,
@@ -112,7 +112,7 @@ public class SavingsServiceIntegrationTest {
         );
 
         assertThatThrownBy(() ->
-                savingsService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto)
+                savingsPotService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto)
         )
         .isInstanceOf(DataIntegrityViolationException.class);
     }

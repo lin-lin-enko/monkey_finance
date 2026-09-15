@@ -12,8 +12,8 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(schema = "dev", name = "savings")
-public class Savings {
+@Table(schema = "dev", name = "savings_pots")
+public class SavingsPot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,7 +25,7 @@ public class Savings {
     private Account account;
 
     @Column(nullable = false, length = 50)
-    @Size(min = 2, max = 50, message = "Savings name must be 2 to 50 characters long")
+    @Size(min = 2, max = 50, message = "SavingsPot name must be 2 to 50 characters long")
     private String name;
 
     @Column(length = 255)
@@ -49,9 +49,9 @@ public class Savings {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private OffsetDateTime createdAt;
 
-    protected Savings(){}
+    protected SavingsPot(){}
 
-    public Savings(
+    public SavingsPot(
             Account account,
             String name,
             String description,

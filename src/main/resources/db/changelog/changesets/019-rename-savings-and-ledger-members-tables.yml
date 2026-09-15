@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-rename-savings-and-ledger-members-tables
+      author: alina
+      changes:
+        - renameTable:
+            schemaName: dev
+            oldTableName: savings
+            newTableName: savings_pots
+        - renameTable:
+            schemaName: dev
+            oldTableName: ledger_members
+            newTableName: ledger_memberships

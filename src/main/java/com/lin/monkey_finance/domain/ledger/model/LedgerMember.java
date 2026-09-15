@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "ledger_members", schema = "dev")
+@Table(name = "ledger_memberships", schema = "dev")
 public class LedgerMember {
 
     @EmbeddedId

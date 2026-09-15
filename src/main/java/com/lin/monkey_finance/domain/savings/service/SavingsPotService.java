@@ -8,11 +8,11 @@ import com.lin.monkey_finance.domain.ledger.model.LedgerMember;
 import com.lin.monkey_finance.domain.ledger.model.LedgerMemberId;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
 import com.lin.monkey_finance.domain.ledger.service.LedgerActivityLogService;
-import com.lin.monkey_finance.domain.savings.dto.SavingsCreateDto;
-import com.lin.monkey_finance.domain.savings.dto.SavingsResponseDto;
-import com.lin.monkey_finance.domain.savings.mapper.SavingsMapper;
-import com.lin.monkey_finance.domain.savings.model.Savings;
-import com.lin.monkey_finance.domain.savings.repository.SavingsRepository;
+import com.lin.monkey_finance.domain.savings.dto.SavingsPotCreateDto;
+import com.lin.monkey_finance.domain.savings.dto.SavingsPotResponseDto;
+import com.lin.monkey_finance.domain.savings.mapper.SavingsPotMapper;
+import com.lin.monkey_finance.domain.savings.model.SavingsPot;
+import com.lin.monkey_finance.domain.savings.repository.SavingsPotRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,50 +20,50 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class SavingsService {
+public class SavingsPotService {
 
     private final AccountRepository accountRepository;
-    private final SavingsRepository savingsRepository;
+    private final SavingsPotRepository savingsPotRepository;
     private final LedgerMemberRepository memberRepository;
-    private final SavingsMapper mapper;
+    private final SavingsPotMapper mapper;
     private final LedgerActivityLogService activityLogService;
 
-    public SavingsService(
+    public SavingsPotService(
             AccountRepository accountRepository,
-            SavingsRepository savingsRepository,
+            SavingsPotRepository savingsPotRepository,
             LedgerMemberRepository memberRepository,
-            SavingsMapper mapper,
+            SavingsPotMapper mapper,
             LedgerActivityLogService activityLogService
     ){
         this.accountRepository = accountRepository;
-        this.savingsRepository = savingsRepository;
+        this.savingsPotRepository = savingsPotRepository;
         this.memberRepository = memberRepository;
         this.mapper = mapper;
         this.activityLogService = activityLogService;
     }
 
     @Transactional(readOnly = true)
-    public List<SavingsResponseDto> getAll(UUID userId, UUID accountId){
+    public List<SavingsPotResponseDto> getAll(UUID userId, UUID accountId){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("No account with such id"));
 
         if (!memberRepository.existsById(new LedgerMemberId(account.getLedger().getId(), userId)))
                 throw new ResourceNotFoundException("Current user is not a member of this ledger or ledger/user don't exist");
 
-        List<SavingsResponseDto> savings = savingsRepository.findAllByAccountId(accountId)
+        List<SavingsPotResponseDto> savingsPots = savingsPotRepository.findAllByAccountId(accountId)
                 .stream().map(mapper::toResponseDto).toList();
-        return savings;
+        return savingsPots;
     }
 
     @Transactional
-    public SavingsResponseDto create(UUID userId, UUID accountId, SavingsCreateDto createDto){
+    public SavingsPotResponseDto create(UUID userId, UUID accountId, SavingsPotCreateDto createDto){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("No account with such id"));
 
         LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(account.getLedger().getId(), userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Current user is not a member of this ledger or ledger/user don't exist"));
 
-        Savings savings = new Savings(
+        SavingsPot savingsPot = new SavingsPot(
                 account,
                 createDto.name(),
                 createDto.description(),
@@ -73,8 +73,8 @@ public class SavingsService {
                 createDto.percentageRate()
         );
 
-        Savings savedSavings = savingsRepository.saveAndFlush(savings);
-        activityLogService.create(currentMember.getLedger(), currentMember.getUser(), savedSavings.getId(), LedgerActionType.SAVINGS_CREATED, "Savings with name " + savings.getName() + " was created");
-        return mapper.toResponseDto(savedSavings);
+        SavingsPot savedSavingsPot = savingsPotRepository.saveAndFlush(savingsPot);
+        activityLogService.create(currentMember.getLedger(), currentMember.getUser(), savedSavingsPot.getId(), LedgerActionType.SAVINGS_CREATED, "SavingsPot with name " + savingsPot.getName() + " was created");
+        return mapper.toResponseDto(savedSavingsPot);
     }
 }
