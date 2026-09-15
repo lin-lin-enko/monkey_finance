@@ -39,7 +39,7 @@ public class LedgerController {
 
     @GetMapping("/{ledgerId}")
     public ResponseEntity<LedgerDetailedResponseDto> getLedgerById(@PathVariable UUID ledgerId) {
-        LedgerDetailedResponseDto dto = ledgerService.getLedgerById(ledgerId);
+        LedgerDetailedResponseDto dto = ledgerService.getById(ledgerId);
         return ResponseEntity.ok(dto);
     }
 

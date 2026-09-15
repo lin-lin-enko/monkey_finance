@@ -75,8 +75,17 @@ public interface CategoryMapper {
     }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "ledger", ignore = true)
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "system", ignore = true)
+    @Mapping(target = "subcategories", ignore = true)
     void updateFromDto(CategoryUpdateDto dto, @MappingTarget Category category);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "ledger", ignore = true)
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "system", ignore = true)
+    @Mapping(target = "type", ignore = true)
+    @Mapping(target = "subcategories", ignore = true)
     void updateFromDto(SubcategoryUpdateDto dto, @MappingTarget Category subcategory);
 }

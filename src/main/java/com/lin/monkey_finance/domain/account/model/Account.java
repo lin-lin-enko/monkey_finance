@@ -43,7 +43,7 @@ public class Account {
     @JoinColumn(name = "ledger_id")
     private Ledger ledger;
 
-    public Account(){}
+    protected Account(){}
 
     public Account(
             String name,

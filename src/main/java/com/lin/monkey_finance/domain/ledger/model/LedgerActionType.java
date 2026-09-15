@@ -1,6 +1,9 @@
 package com.lin.monkey_finance.domain.ledger.model;
 
 public enum LedgerActionType {
+    LEDGER_CREATED,
+    LEDGER_EDITED,
+    LEDGER_DELETED,
     MEMBER_INVITED,
     USER_DECLINED_INVITATION,
     MEMBER_INVITATION_REVOKED,
@@ -22,5 +25,8 @@ public enum LedgerActionType {
     SUBCATEGORY_DELETED,
     ACCOUNT_ADDED,
     ACCOUNT_EDITED,
-    ACCOUNT_DELETED
+    ACCOUNT_DELETED,
+    SAVINGS_CREATED,
+    SAVINGS_EDITED,
+    SAVINGS_DELETED
 }

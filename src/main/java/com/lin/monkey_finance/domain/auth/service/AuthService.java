@@ -3,6 +3,11 @@ import com.lin.monkey_finance.common.exception.AccountStatusException;
 import com.lin.monkey_finance.common.exception.InvalidTokenException;
 import com.lin.monkey_finance.common.exception.ResourceAlreadyExistsException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.domain.account.dto.AccountCreateDto;
+import com.lin.monkey_finance.domain.account.model.AccountType;
+import com.lin.monkey_finance.domain.account.model.Currency;
+import com.lin.monkey_finance.domain.account.service.AccountService;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
@@ -14,18 +19,15 @@ import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.model.UserStatus;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
 import com.lin.monkey_finance.domain.user.service.EmailService;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -38,9 +40,9 @@ public class AuthService {
     private final LedgerService ledgerService;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
-    private final EntityManager entityManager;
     private final EmailService emailService;
     private final UserMapper userMapper;
+    private final AccountService accountService;
 
     public AuthService(
             UserRepository userRepository,
@@ -48,17 +50,18 @@ public class AuthService {
             LedgerService ledgerService,
             JwtEncoder jwtEncoder,
             JwtDecoder jwtDecoder,
-            EntityManager entityManager,
             EmailService emailService,
-            UserMapper userMapper){
+            UserMapper userMapper,
+            AccountService accountService
+            ){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.ledgerService = ledgerService;
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
-        this.entityManager = entityManager;
         this.emailService = emailService;
         this.userMapper = userMapper;
+        this.accountService = accountService;
     }
 
     @Transactional
@@ -89,7 +92,17 @@ public class AuthService {
                 "My ledger",
                 "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you"
         );
-        ledgerService.create(ledgerRequestDto, savedUser);
+        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, savedUser);
+
+        AccountCreateDto createDto = new AccountCreateDto(
+                "Default account",
+                AccountType.BANK,
+                null,
+                BigDecimal.ZERO,
+                Currency.EUR,
+                "Your default account. You can make changes if you want to customize it further"
+        );
+        accountService.create(savedUser.getId(), ledgerDetailedResponseDto.id(), createDto);
 
         String token = generateEmailConfirmationToken(savedUser.getId());
         emailService.sendConfirmationEmail(savedUser.getEmail(), token);

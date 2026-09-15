@@ -12,5 +12,6 @@ public interface AccountMapper {
     AccountResponseDto toResponseDto(Account account);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "ledger", ignore = true)
     void updateFromDto(AccountEditDto accountEditDto, @MappingTarget Account account);
 }

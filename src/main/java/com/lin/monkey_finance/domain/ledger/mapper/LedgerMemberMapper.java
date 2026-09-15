@@ -11,6 +11,7 @@ import org.mapstruct.*;
 public interface LedgerMemberMapper {
 
     @Mapping(target = "userId", source = "ledgerMember.id.userId")
+    @Mapping(target = "ledgerId", source = "ledgerMember.id.ledgerId")
     @Mapping(target = "status", source = "ledgerMember.status")
     @Mapping(target = "invitedByUserId", source = "ledgerMember.invitedByUser.id")
     @Mapping(target = "blockedByUserId", source = "ledgerMember.blockedByUser.id")

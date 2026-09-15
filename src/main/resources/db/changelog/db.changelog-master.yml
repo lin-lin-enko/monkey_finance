@@ -29,3 +29,9 @@ databaseChangeLog:
       file: db/changelog/changesets/014-add-subcategories-logic.yml
   - include:
       file: db/changelog/changesets/015-add-indexes-for-table-fields.yml
+  - include:
+      file: db/changelog/changesets/016-create-table-accounts.yml
+  - include:
+      file: db/changelog/changesets/017-add-on-delete-behaviour.yml
+  - include:
+      file: db/changelog/changesets/018-create-table-savings.yml

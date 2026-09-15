@@ -1,0 +1,119 @@
+package com.lin.monkey_finance.domain.savings.service;
+
+import com.lin.monkey_finance.TestcontainersConfiguration;
+import com.lin.monkey_finance.domain.account.dto.AccountResponseDto;
+import com.lin.monkey_finance.domain.account.model.Currency;
+import com.lin.monkey_finance.domain.account.service.AccountService;
+import com.lin.monkey_finance.domain.auth.service.AuthService;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
+import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
+import com.lin.monkey_finance.domain.savings.dto.SavingsCreateDto;
+import com.lin.monkey_finance.domain.savings.dto.SavingsResponseDto;
+import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
+import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
+import com.lin.monkey_finance.domain.user.service.EmailService;
+import com.lin.monkey_finance.domain.user.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.*;
+
+@ActiveProfiles("test")
+@SpringBootTest
+@Import(TestcontainersConfiguration.class)
+public class SavingsServiceIntegrationTest {
+
+    @Autowired
+    private SavingsService savingsService;
+
+    @Autowired
+    private AuthService authService;
+
+    @MockitoBean
+    private EmailService emailService;
+
+    @Autowired
+    private LedgerMemberService memberService;
+
+    @Autowired
+    private AccountService accountService;
+
+    @Autowired
+    private UserService userService;
+
+    UserResponseDto userResponseDto;
+
+    LedgerMemberResponseDto membershipResponseDto;
+
+    AccountResponseDto accountResponseDto;
+
+    @BeforeEach
+    void setUp(){
+        // setting test data
+
+        UserRegisterDto testUserRegisterDto = new UserRegisterDto(
+                "testusername",
+                "testemail@mail.com",
+                "password",
+                "Test Name",
+                LocalDate.of(2008, 4, 28)
+        );
+
+        if(userService.existsByEmail("testemail@mail.com"))
+            userResponseDto = userService.getByEmail("testemail@mail.com");
+        else userResponseDto = authService.register(testUserRegisterDto);
+
+        membershipResponseDto = memberService.getUserDefaultLedgerMembership(userResponseDto.id());
+
+        accountResponseDto = accountService.getLedgerAccount(membershipResponseDto.userId(), membershipResponseDto.ledgerId());
+    }
+
+    @Test
+    @DisplayName("Test if savings creation works")
+    void createSavings(){
+        SavingsCreateDto createDto = new SavingsCreateDto(
+                "Dog",
+                "Savings pot for buying a borzoi doggo",
+                Currency.UAH,
+                new BigDecimal(500),
+                null,
+                null
+        );
+
+        SavingsResponseDto responseDto = savingsService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto);
+        assertThat(responseDto).isNotNull();
+        assertThat(responseDto.id()).isNotNull();
+        assertThat(responseDto.name()).isEqualTo(createDto.name());
+        assertThat(responseDto.description()).isEqualTo(createDto.description());
+        assertThat(responseDto.currency()).isEqualTo(createDto.currency());
+        assertThat(responseDto.targetSum()).isEqualByComparingTo(createDto.targetSum());
+    }
+
+    @Test
+    @DisplayName("Test if exceptions are caught when creating a savings pot")
+    void testExceptionCatchOnSavingsCreation(){
+        SavingsCreateDto createDto = new SavingsCreateDto(
+                null,
+                null,
+               null,
+                null,
+                null,
+                null
+        );
+
+        assertThatThrownBy(() ->
+                savingsService.create(membershipResponseDto.userId(), accountResponseDto.id(), createDto)
+        )
+        .isInstanceOf(DataIntegrityViolationException.class);
+    }
+}

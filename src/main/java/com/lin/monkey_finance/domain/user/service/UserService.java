@@ -15,14 +15,41 @@ import java.util.UUID;
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final UserMapper mapper;
 
     public UserService(
             UserRepository userRepository,
-            UserMapper userMapper
+            UserMapper mapper
     ){
         this.userRepository = userRepository;
-        this.userMapper = userMapper;
+        this.mapper = mapper;
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getById(UUID userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "No user with such id"
+                        )
+                );
+        return mapper.toResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getByEmail(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "No user with such email " + email
+                        )
+                );
+        return mapper.toResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email){
+        return userRepository.existsByEmail(email);
     }
 
     @Transactional
@@ -34,9 +61,9 @@ public class UserService {
                         )
                 );
 
-        userMapper.updateUserFromDto(userUpdateDto, user);
+        mapper.updateUserFromDto(userUpdateDto, user);
 
-        return userMapper.toResponseDto(user);
+        return mapper.toResponseDto(user);
     }
 
     @Transactional
@@ -48,6 +75,6 @@ public class UserService {
                         )
                 );
         user.setStatus(UserStatus.DELETED);
-        return userMapper.toResponseDto(user);
+        return mapper.toResponseDto(user);
     }
 }

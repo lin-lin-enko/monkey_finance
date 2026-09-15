@@ -30,6 +30,7 @@
                 - column:
                     name: balance
                     type: decimal(13,2)
+                    defaultValueNumeric: 0
                     constraints:
                       nullable: false
                 - column:
@@ -50,3 +51,10 @@
                       referencedTableName: ledgers
                       referencedColumnNames: id
                       onDelete: CASCADE
+
+          - createIndex:
+              indexName: idx_accounts_ledger_id
+              tableName: accounts
+              columns:
+                - column:
+                    name: ledger_id

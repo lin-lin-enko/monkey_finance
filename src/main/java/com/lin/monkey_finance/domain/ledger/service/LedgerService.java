@@ -23,17 +23,20 @@ public class LedgerService {
     private final LedgerMemberRepository ledgerMemberRepository;
     private final UserRepository userRepository;
     private final LedgerMapper ledgerMapper;
+    private final LedgerActivityLogService activityLogService;
 
     public LedgerService(
             LedgerRepository ledgerRepository,
             LedgerMemberRepository ledgerMemberRepository,
             UserRepository userRepository,
-            LedgerMapper ledgerMapper
+            LedgerMapper ledgerMapper,
+            LedgerActivityLogService activityLogService
             ){
         this.ledgerRepository = ledgerRepository;
         this.ledgerMemberRepository = ledgerMemberRepository;
         this.userRepository = userRepository;
         this.ledgerMapper = ledgerMapper;
+        this.activityLogService = activityLogService;
     }
 
     @Transactional
@@ -47,7 +50,7 @@ public class LedgerService {
     public LedgerDetailedResponseDto create(LedgerRequestDto ledgerRequestDto, User user){
         Ledger ledger = new Ledger(ledgerRequestDto.name(), ledgerRequestDto.description(), user.getId());
         boolean isDefault = ledgerMemberRepository.findAllById_UserId(user.getId()).isEmpty();
-        Ledger savedLedger = ledgerRepository.save(ledger);
+        Ledger savedLedger = ledgerRepository.saveAndFlush(ledger);
 
         LedgerMember member = new LedgerMember(
                 savedLedger,
@@ -60,10 +63,12 @@ public class LedgerService {
         member.acceptInvitation();
         ledgerMemberRepository.save(member);
         savedLedger.addMember(member);
+        activityLogService.create(ledger, user, savedLedger.getId(), LedgerActionType.LEDGER_CREATED, "Ledger was created");
+        activityLogService.create(ledger, user, user.getId(), LedgerActionType.MEMBER_JOINED, "First ledger owner was created");
         return ledgerMapper.toDetailedResponseDto(savedLedger);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<LedgerResponseDto> getCurrentUserLedgers(UUID userId){
         List<Ledger> ledgers = ledgerRepository.findAllByUserId(userId);
         List<LedgerResponseDto> ledgerResponseDtoList = new ArrayList<>();
@@ -76,8 +81,8 @@ public class LedgerService {
         return ledgerResponseDtoList;
     }
 
-    @Transactional
-    public LedgerDetailedResponseDto getLedgerById(UUID ledgerId){
+    @Transactional(readOnly = true)
+    public LedgerDetailedResponseDto getById(UUID ledgerId){
         Ledger ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new ResourceNotFoundException("No ledger with such id"));
         return ledgerMapper.toDetailedResponseDto(ledger);
@@ -93,6 +98,7 @@ public class LedgerService {
 
         ledgerMapper.updateFromDto(ledgerUpdateDto, ledgerMember.getLedger());
 
+        activityLogService.create(ledgerMember.getLedger(), ledgerMember.getUser(), ledgerId, LedgerActionType.LEDGER_EDITED, "Ledger was edited");
         return ledgerMapper.toDetailedResponseDto(ledgerMember.getLedger());
 
     }
@@ -105,6 +111,7 @@ public class LedgerService {
             throw new AccessDeniedException("User isn't permitted to delete this ledger");
         }
 
+        activityLogService.create(ledgerMember.getLedger(), ledgerMember.getUser(), ledgerId, LedgerActionType.LEDGER_DELETED, "Ledger was deleted");
         ledgerRepository.delete(ledgerMember.getLedger());
     }
 }

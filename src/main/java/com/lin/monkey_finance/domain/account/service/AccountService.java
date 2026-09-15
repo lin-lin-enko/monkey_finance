@@ -148,4 +148,14 @@ public class AccountService {
         );
         activityLogRepository.save(activityLog);
     }
+
+    @Transactional(readOnly = true)
+    public AccountResponseDto getLedgerAccount(UUID userId, UUID ledgerId){
+        memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+                .orElseThrow(() -> new ResourceNotFoundException("User is not a member of this ledger or ledger/user don't exist "));
+        Account account = accountRepository.findByLedgerId(ledgerId)
+                .orElseThrow(() -> new ResourceNotFoundException("This ledger doesn't have an account ot it wasn't found"));
+
+        return mapper.toResponseDto(account);
+    }
 }

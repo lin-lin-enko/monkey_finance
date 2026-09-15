@@ -15,7 +15,7 @@ import java.util.UUID;
 public interface LedgerMemberRepository extends JpaRepository<LedgerMember, LedgerMemberId> {
 
     @Query("SELECT lm FROM LedgerMember lm WHERE lm.id.userId = :userId AND lm.isDefaultLedger = true")
-    Optional<LedgerMember> findDefaultLedgerByUserId(@Param("userId") UUID userId);
+    Optional<LedgerMember> findDefaultLedgerMembershipByUserId(@Param("userId") UUID userId);
 
     List<LedgerMember> findAllById_LedgerId(UUID ledgerId);
     List<LedgerMember> findAllById_UserId(UUID userId);
