@@ -5,7 +5,7 @@ import com.lin.monkey_finance.common.exception.InvalidStateException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.model.*;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerActivityLogRepository;
-import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
+import com.lin.monkey_finance.domain.ledger.repository.LedgerMembershipRepository;
 import com.lin.monkey_finance.domain.transaction.dto.*;
 import com.lin.monkey_finance.domain.transaction.mapper.CategoryMapper;
 import com.lin.monkey_finance.domain.transaction.mapper.CategorySettingsMapper;
@@ -27,7 +27,7 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategorySettingsRepository settingsRepository;
     private final CategorySettingsMapper settingsMapper;
-    private final LedgerMemberRepository memberRepository;
+    private final LedgerMembershipRepository memberRepository;
     private final LedgerActivityLogRepository activityLogRepository;
 
     public CategoryService(
@@ -35,7 +35,7 @@ public class CategoryService {
             CategoryMapper categoryMapper,
             CategorySettingsRepository settingsRepository,
             CategorySettingsMapper settingsMapper,
-            LedgerMemberRepository memberRepository,
+            LedgerMembershipRepository memberRepository,
             LedgerActivityLogRepository activityLogRepository
     ){
         this.categoryRepository = categoryRepository;
@@ -47,6 +47,13 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
+    public Category getReferenceById(UUID categoryId){
+        if (categoryRepository.existsById(categoryId))
+            return categoryRepository.getReferenceById(categoryId);
+        else throw new ResourceNotFoundException("No category/subcategory with such id");
+    }
+
+    @Transactional(readOnly = true)
     public List<CategoryResponseDto> getSystemCategories(){
         return categoryRepository.findAllByIsSystemTrue()
                 .stream().map(categoryMapper::toResponseDto).toList();
@@ -54,7 +61,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getLedgerCategories(UUID ledgerId, UUID userId){
-        if(!memberRepository.existsById(new LedgerMemberId(ledgerId, userId)))
+        if(!memberRepository.existsById(new LedgerMembershipId(ledgerId, userId)))
             throw new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist");
 
         return categoryRepository.findAllWithSettingsByLedgerId(ledgerId)
@@ -63,7 +70,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponseDto editCategory(UUID ledgerId, UUID categoryId, CategoryUpdateDto dto, UUID userId){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
@@ -135,7 +142,7 @@ public class CategoryService {
 
     @Transactional
     public void deleteCategory(UUID ledgerId, UUID categoryId, UUID userId){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
@@ -176,7 +183,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponseDto createCategory(UUID ledgerId, UUID userId, CategoryCreateDto requestDto){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
@@ -214,7 +221,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponseDto createSubcategory(UUID ledgerId, UUID parentId, UUID userId, SubcategoryCreateDto requestDto){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
@@ -266,7 +273,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponseDto editSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId, SubcategoryUpdateDto updateDto ){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)
@@ -294,7 +301,7 @@ public class CategoryService {
     }
 
     public void deleteSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId){
-        LedgerMember currentMember = memberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership currentMember = memberRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of this ledger or the ledger/user don't exist"));
 
         if (currentMember.getAccessType() != AccessType.ADMIN && currentMember.getAccessType() != AccessType.OWNER)

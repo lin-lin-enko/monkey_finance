@@ -17,7 +17,7 @@ public interface LedgerRepository extends JpaRepository<Ledger, UUID> {
 
     @Query("""
         SELECT l FROM Ledger l
-        JOIN LedgerMember lm ON l.id = lm.id.ledgerId
+        JOIN LedgerMembership lm ON l.id = lm.id.ledgerId
         WHERE lm.id.userId = :userId
 """)
     List<Ledger> findAllByUserId(@Param("userId") UUID userId);

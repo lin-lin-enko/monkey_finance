@@ -5,8 +5,8 @@ import com.lin.monkey_finance.domain.account.dto.AccountResponseDto;
 import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.account.service.AccountService;
 import com.lin.monkey_finance.domain.auth.service.AuthService;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerMemberResponseDto;
-import com.lin.monkey_finance.domain.ledger.service.LedgerMemberService;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
+import com.lin.monkey_finance.domain.ledger.service.LedgerMembershipService;
 import com.lin.monkey_finance.domain.savings.dto.SavingsPotCreateDto;
 import com.lin.monkey_finance.domain.savings.dto.SavingsPotResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserRegisterDto;
@@ -43,7 +43,7 @@ public class SavingsPotServiceIntegrationTest {
     private EmailService emailService;
 
     @Autowired
-    private LedgerMemberService memberService;
+    private LedgerMembershipService memberService;
 
     @Autowired
     private AccountService accountService;
@@ -53,7 +53,7 @@ public class SavingsPotServiceIntegrationTest {
 
     UserResponseDto userResponseDto;
 
-    LedgerMemberResponseDto membershipResponseDto;
+    LedgerMembershipResponseDto membershipResponseDto;
 
     AccountResponseDto accountResponseDto;
 
@@ -96,7 +96,7 @@ public class SavingsPotServiceIntegrationTest {
         assertThat(responseDto.name()).isEqualTo(createDto.name());
         assertThat(responseDto.description()).isEqualTo(createDto.description());
         assertThat(responseDto.currency()).isEqualTo(createDto.currency());
-        assertThat(responseDto.targetSum()).isEqualByComparingTo(createDto.targetSum());
+        assertThat(responseDto.targetAmount()).isEqualByComparingTo(createDto.targetAmount());
     }
 
     @Test

@@ -37,6 +37,13 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public User getReferenceById(UUID userId){
+        if (userRepository.existsById(userId))
+            return userRepository.getReferenceById(userId);
+        else throw new ResourceNotFoundException("No user with such id");
+    }
+
+    @Transactional(readOnly = true)
     public UserResponseDto getByEmail(String email){
         User user = userRepository.findByEmail(email)
                 .orElseThrow(

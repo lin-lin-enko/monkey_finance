@@ -6,7 +6,7 @@ import com.lin.monkey_finance.domain.ledger.dto.LedgerUpdateDto;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = {LedgerMemberMapper.class}, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = {LedgerMembershipMapper.class}, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LedgerMapper {
     LedgerResponseDto toResponseDto(Ledger ledger);
 

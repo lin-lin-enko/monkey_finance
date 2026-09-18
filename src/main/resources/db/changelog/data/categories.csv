@@ -28,3 +28,4 @@ gen_random_uuid(),Investment,"When you give money or purchase something with an 
 gen_random_uuid(),Other income,"The income you can't quite categorize",#B8F3FF,#003B47,https://cdn-icons-png.flaticon.com/512/5895/5895032.png,TRUE,INCOME
 gen_random_uuid(),Baby or kid,"Money you spend on your kids",#ffb0e3,#960062,https://cdn-icons-png.flaticon.com/512/2176/2176706.png,TRUE,EXPENSE
 gen_random_uuid(),Pet,"Money you spend on your fluffy friend",#e8c599,#613909,https://www.svgrepo.com/show/29317/pets.svg,TRUE,EXPENSE
+gen_random_uuid(),Transfer,Money you transfer between accounts,#deebf7,#08529c,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9f86feQH_yLG9zMMEFqkRNBKisUUyeCS2gmdMqIxYslyBpbh29GNekYE&s=10,TRUE,TRANSFER

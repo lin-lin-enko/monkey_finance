@@ -6,7 +6,7 @@ import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActionType;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActivityLog;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerActivityLogRepository;
-import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
+import com.lin.monkey_finance.domain.ledger.repository.LedgerMembershipRepository;
 import com.lin.monkey_finance.domain.user.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +18,12 @@ import java.util.UUID;
 public class LedgerActivityLogService {
     private final LedgerActivityLogRepository logRepository;
     private final LedgerActivityLogMapper logMapper;
-    private final LedgerMemberRepository memberRepository;
+    private final LedgerMembershipRepository memberRepository;
 
     public LedgerActivityLogService(
             LedgerActivityLogRepository logRepository,
             LedgerActivityLogMapper logMapper,
-            LedgerMemberRepository memberRepository
+            LedgerMembershipRepository memberRepository
     ){
         this.logRepository = logRepository;
         this.logMapper = logMapper;

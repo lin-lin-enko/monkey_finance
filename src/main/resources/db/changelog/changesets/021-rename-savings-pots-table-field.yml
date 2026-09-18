@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-rename-savings-table-field
+      author: alina
+      changes:
+        - renameColumn:
+            schemaName: dev
+            tableName: savings_pots
+            oldColumnName: target_sum
+            newColumnName: target_amount

@@ -37,7 +37,7 @@ public class SavingsPot {
     private Currency currency = Currency.EUR;
 
     @Column(name = "target_sum", nullable = false)
-    private BigDecimal targetSum;
+    private BigDecimal targetAmount;
 
     @Column(name = "due_date")
     private OffsetDateTime dueDate;
@@ -56,7 +56,7 @@ public class SavingsPot {
             String name,
             String description,
             Currency currency,
-            BigDecimal targetSum,
+            BigDecimal targetAmount,
             OffsetDateTime dueDate,
             BigDecimal percentageRate
     ){
@@ -64,7 +64,7 @@ public class SavingsPot {
         this.name = name;
         this.description = description;
         this.currency = currency;
-        this.targetSum = targetSum;
+        this.targetAmount = targetAmount;
         this.dueDate = dueDate;
         this.percentageRate = percentageRate;
     }
@@ -105,12 +105,12 @@ public class SavingsPot {
         this.currency = currency;
     }
 
-    public BigDecimal getTargetSum() {
-        return targetSum;
+    public BigDecimal getTargetAmount() {
+        return targetAmount;
     }
 
-    public void setTargetSum(BigDecimal targetSum) {
-        this.targetSum = targetSum;
+    public void setTargetAmount(BigDecimal targetAmount) {
+        this.targetAmount = targetAmount;
     }
 
     public OffsetDateTime getDueDate() {

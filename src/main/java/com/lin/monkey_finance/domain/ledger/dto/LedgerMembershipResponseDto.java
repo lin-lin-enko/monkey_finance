@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 // used to get info about a user's membership
-public record LedgerMemberResponseDto(
+public record LedgerMembershipResponseDto(
         UUID userId,
         UUID ledgerId,
         AccessType accessType,

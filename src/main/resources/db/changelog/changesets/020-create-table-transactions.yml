@@ -1,0 +1,145 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-create-table-transactions
+      author: alina
+      changes:
+        - createTable:
+            schemaName: dev
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(255)
+              - column:
+                  name: amount
+                  type: decimal(13, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transactions_user
+                    referencedSchemaName: dev
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    onDelete: CASCADE
+              - column:
+                  name: occurred_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    referencedSchemaName: dev
+                    referencedTableName: categories
+                    referencedColumnNames: id
+                    foreignKeyName: fk_transactions_category
+                    onDelete: CASCADE
+              - column:
+                  name: subcategory_id
+                  type: uuid
+                  constraints:
+                    referencedSchemaName: dev
+                    referencedTableName: categories
+                    referencedColumnNames: id
+                    foreignKeyName: fk_transactions_subcategory
+                    onDelete: CASCADE
+              - column:
+                  name: ledger_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    referencedSchemaName: dev
+                    referencedTableName: ledgers
+                    referencedColumnNames: id
+                    foreignKeyName: fk_transactions_ledger
+                    onDelete: CASCADE
+              - column:
+                  name: account_id
+                  type: uuid
+                  constraints:
+                    referencedSchemaName: dev
+                    referencedTableName: accounts
+                    referencedColumnNames: id
+                    foreignKeyName: fk_transactions_account
+                    onDelete: CASCADE
+              - column:
+                  name: savings_pot_id
+                  type: uuid
+                  constraints:
+                    referencedSchemaName: dev
+                    referencedTableName: savings_pots
+                    referencedColumnNames: id
+                    foreignKeyName: fk_transactions_savings_pot
+                    onDelete: CASCADE
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_author_id
+            tableName: transactions
+            columns:
+              - column: {name: author_id}
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_category_id
+            tableName: transactions
+            columns:
+              - column: { name: category_id }
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_subcategory_id
+            tableName: transactions
+            columns:
+              - column: { name: subcategory_id }
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_ledger_id
+            tableName: transactions
+            columns:
+              - column: { name: ledger_id }
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_account_id
+            tableName: transactions
+            columns:
+              - column: { name: account_id }
+
+        - createIndex:
+            schemaName: dev
+            indexName: idx_transactions_savings_pot_id
+            tableName: transactions
+            columns:
+              - column: { name: savings_pot_id }

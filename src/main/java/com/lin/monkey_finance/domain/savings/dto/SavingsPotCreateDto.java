@@ -20,7 +20,7 @@ public record SavingsPotCreateDto(
     Currency currency,
 
     @NotNull
-    BigDecimal targetSum,
+    BigDecimal targetAmount,
 
     OffsetDateTime dueDate,
 

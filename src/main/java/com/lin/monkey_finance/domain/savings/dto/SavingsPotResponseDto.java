@@ -13,7 +13,7 @@ public record SavingsPotResponseDto(
         String name,
         String description,
         Currency currency,
-        BigDecimal targetSum,
+        BigDecimal targetAmount,
         OffsetDateTime dueDate,
         BigDecimal percentageRate,
         OffsetDateTime createdAt

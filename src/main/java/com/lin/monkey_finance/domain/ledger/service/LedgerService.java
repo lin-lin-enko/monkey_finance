@@ -5,7 +5,7 @@ import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.dto.*;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerMapper;
 import com.lin.monkey_finance.domain.ledger.model.*;
-import com.lin.monkey_finance.domain.ledger.repository.LedgerMemberRepository;
+import com.lin.monkey_finance.domain.ledger.repository.LedgerMembershipRepository;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerRepository;
 import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
@@ -20,23 +20,30 @@ import java.util.UUID;
 public class LedgerService {
 
     private final LedgerRepository ledgerRepository;
-    private final LedgerMemberRepository ledgerMemberRepository;
+    private final LedgerMembershipRepository ledgerMembershipRepository;
     private final UserRepository userRepository;
     private final LedgerMapper ledgerMapper;
     private final LedgerActivityLogService activityLogService;
 
     public LedgerService(
             LedgerRepository ledgerRepository,
-            LedgerMemberRepository ledgerMemberRepository,
+            LedgerMembershipRepository ledgerMembershipRepository,
             UserRepository userRepository,
             LedgerMapper ledgerMapper,
             LedgerActivityLogService activityLogService
             ){
         this.ledgerRepository = ledgerRepository;
-        this.ledgerMemberRepository = ledgerMemberRepository;
+        this.ledgerMembershipRepository = ledgerMembershipRepository;
         this.userRepository = userRepository;
         this.ledgerMapper = ledgerMapper;
         this.activityLogService = activityLogService;
+    }
+
+    @Transactional(readOnly = true)
+    public Ledger getReferenceById(UUID ledgerId){
+        if (ledgerRepository.existsById(ledgerId))
+            return ledgerRepository.getReferenceById(ledgerId);
+        else throw new ResourceNotFoundException("No ledger with such id");
     }
 
     @Transactional
@@ -49,10 +56,10 @@ public class LedgerService {
     @Transactional
     public LedgerDetailedResponseDto create(LedgerRequestDto ledgerRequestDto, User user){
         Ledger ledger = new Ledger(ledgerRequestDto.name(), ledgerRequestDto.description(), user.getId());
-        boolean isDefault = ledgerMemberRepository.findAllById_UserId(user.getId()).isEmpty();
+        boolean isDefault = ledgerMembershipRepository.findAllById_UserId(user.getId()).isEmpty();
         Ledger savedLedger = ledgerRepository.saveAndFlush(ledger);
 
-        LedgerMember member = new LedgerMember(
+        LedgerMembership member = new LedgerMembership(
                 savedLedger,
                 user,
                 isDefault,
@@ -61,7 +68,7 @@ public class LedgerService {
                 MemberStatus.ACTIVE);
 
         member.acceptInvitation();
-        ledgerMemberRepository.save(member);
+        ledgerMembershipRepository.save(member);
         savedLedger.addMember(member);
         activityLogService.create(ledger, user, savedLedger.getId(), LedgerActionType.LEDGER_CREATED, "Ledger was created");
         activityLogService.create(ledger, user, user.getId(), LedgerActionType.MEMBER_JOINED, "First ledger owner was created");
@@ -90,28 +97,28 @@ public class LedgerService {
 
     @Transactional
     public LedgerDetailedResponseDto edit(LedgerUpdateDto ledgerUpdateDto, UUID userId, UUID ledgerId){
-        LedgerMember ledgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership ledgerMembership = ledgerMembershipRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Ledger member not found"));
-        if (ledgerMember.getAccessType() != AccessType.ADMIN && ledgerMember.getAccessType() != AccessType.OWNER){
+        if (ledgerMembership.getAccessType() != AccessType.ADMIN && ledgerMembership.getAccessType() != AccessType.OWNER){
             throw new AccessDeniedException("User isn't permitted to edit this ledger");
         }
 
-        ledgerMapper.updateFromDto(ledgerUpdateDto, ledgerMember.getLedger());
+        ledgerMapper.updateFromDto(ledgerUpdateDto, ledgerMembership.getLedger());
 
-        activityLogService.create(ledgerMember.getLedger(), ledgerMember.getUser(), ledgerId, LedgerActionType.LEDGER_EDITED, "Ledger was edited");
-        return ledgerMapper.toDetailedResponseDto(ledgerMember.getLedger());
+        activityLogService.create(ledgerMembership.getLedger(), ledgerMembership.getUser(), ledgerId, LedgerActionType.LEDGER_EDITED, "Ledger was edited");
+        return ledgerMapper.toDetailedResponseDto(ledgerMembership.getLedger());
 
     }
 
     @Transactional
     public void delete(UUID userId, UUID ledgerId){
-        LedgerMember ledgerMember = ledgerMemberRepository.findById(new LedgerMemberId(ledgerId, userId))
+        LedgerMembership ledgerMembership = ledgerMembershipRepository.findById(new LedgerMembershipId(ledgerId, userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Ledger member not found"));
-        if (ledgerMember.getAccessType() != AccessType.OWNER){
+        if (ledgerMembership.getAccessType() != AccessType.OWNER){
             throw new AccessDeniedException("User isn't permitted to delete this ledger");
         }
 
-        activityLogService.create(ledgerMember.getLedger(), ledgerMember.getUser(), ledgerId, LedgerActionType.LEDGER_DELETED, "Ledger was deleted");
-        ledgerRepository.delete(ledgerMember.getLedger());
+        activityLogService.create(ledgerMembership.getLedger(), ledgerMembership.getUser(), ledgerId, LedgerActionType.LEDGER_DELETED, "Ledger was deleted");
+        ledgerRepository.delete(ledgerMembership.getLedger());
     }
 }

@@ -10,5 +10,5 @@ public record LedgerDetailedResponseDto(
     String description,
     UUID creatorId,
     OffsetDateTime createdAt,
-    List<LedgerMemberResponseDto> members
+    List<LedgerMembershipResponseDto> members
 ){}

@@ -6,14 +6,13 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "ledger_memberships", schema = "dev")
-public class LedgerMember {
+public class LedgerMembership {
 
     @EmbeddedId
-    private LedgerMemberId id;
+    private LedgerMembershipId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("ledgerId")
@@ -64,9 +63,9 @@ public class LedgerMember {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
-    protected LedgerMember(){}
+    protected LedgerMembership(){}
 
-    public LedgerMember(
+    public LedgerMembership(
             Ledger ledger,
             User user,
             boolean isDefaultLedger,
@@ -74,7 +73,7 @@ public class LedgerMember {
             User invitedByUser,
             MemberStatus status
     ){
-        this.id = new LedgerMemberId(ledger.getId(), user.getId());
+        this.id = new LedgerMembershipId(ledger.getId(), user.getId());
         this.ledger = ledger;
         this.user = user;
         this.isDefaultLedger = isDefaultLedger;
@@ -111,7 +110,7 @@ public class LedgerMember {
         this.deletedByUser = deletedByUser;
     }
 
-    public LedgerMemberId getId() {
+    public LedgerMembershipId getId() {
         return id;
     }
 

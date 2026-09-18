@@ -7,7 +7,7 @@ import java.util.UUID;
 
 
 // used to invite user to a ledger
-public record LedgerMemberInvitationDto(
+public record LedgerMembershipInvitationDto(
     UUID ledgerId,
     String ledgerName,
     String ledgerDescription,

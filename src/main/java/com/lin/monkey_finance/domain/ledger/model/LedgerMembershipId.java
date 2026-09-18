@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Embeddable
-public class LedgerMemberId implements Serializable {
+public class LedgerMembershipId implements Serializable {
 
     @Column(name = "ledger_id", nullable = false, updatable = false)
     private UUID ledgerId;
@@ -16,9 +16,9 @@ public class LedgerMemberId implements Serializable {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
-    public LedgerMemberId(){}
+    public LedgerMembershipId(){}
 
-    public LedgerMemberId(UUID ledgerId, UUID userId){
+    public LedgerMembershipId(UUID ledgerId, UUID userId){
         this.ledgerId = ledgerId;
         this.userId = userId;
     }
@@ -35,7 +35,7 @@ public class LedgerMemberId implements Serializable {
     public boolean equals(Object obj){
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        LedgerMemberId that = (LedgerMemberId) obj;
+        LedgerMembershipId that = (LedgerMembershipId) obj;
         return Objects.equals(ledgerId, that.ledgerId) && Objects.equals(userId, that.userId);
     }
 

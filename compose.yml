@@ -20,6 +20,8 @@ services:
       - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
+      - CURRENCY_API_KEY=${CURRENCY_API_URL}
+      - CURRENCY_API_URL=${CURRENCY_API_KEY}
     # the app won't start until everything below starts
     depends_on:
       db:
@@ -42,7 +44,7 @@ services:
       - 'POSTGRES_USER=${POSTGRES_USER}'
       - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
     volumes:
-      - ./dev-schema-init.sql:/docker-entrypoint-initdb.d/dev-schema-init.sql
+      - ./src/main/resources/db/dev-schema-init.sql:/docker-entrypoint-initdb.d/dev-schema-init.sql
       - monkey-finance-db-volume:/var/lib/postgresql
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'monkey_finance_admin', '-d', 'monkey_finance']

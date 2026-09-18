@@ -37,3 +37,7 @@ databaseChangeLog:
       file: db/changelog/changesets/018-create-table-savings.yml
   - include:
       file: db/changelog/changesets/019-rename-savings-and-ledger-members-tables.yml
+  - include:
+      file: db/changelog/changesets/020-create-table-transactions.yml
+  - include:
+      file: db/changelog/changesets/021-rename-savings-pots-table-field.yml
