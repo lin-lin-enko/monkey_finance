@@ -32,10 +32,10 @@ public class Ledger {
     private UUID creatorId;
 
     @OneToMany(mappedBy = "ledger")
-    private List<LedgerMembership> members = new ArrayList<>();
+    private List<LedgerMembership> memberships = new ArrayList<>();
 
     public void addMember(LedgerMembership member){
-        this.members.add(member);
+        this.memberships.add(member);
         member.setLedger(this);
     }
 
@@ -75,11 +75,11 @@ public class Ledger {
         return creatorId;
     }
 
-    public List<LedgerMembership> getMembers() {
-        return members;
+    public List<LedgerMembership> getMemberships() {
+        return memberships;
     }
 
-    public void setMembers(List<LedgerMembership> members) {
-        this.members = members;
+    public void setMemberships(List<LedgerMembership> memberships) {
+        this.memberships = memberships;
     }
 }

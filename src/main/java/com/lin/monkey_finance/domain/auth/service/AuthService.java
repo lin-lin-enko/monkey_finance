@@ -19,7 +19,7 @@ import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.model.UserStatus;
 import com.lin.monkey_finance.domain.user.repository.UserRepository;
 import com.lin.monkey_finance.domain.user.service.EmailService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -92,7 +92,7 @@ public class AuthService {
                 "My ledger",
                 "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you"
         );
-        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, savedUser);
+        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, savedUser.getId());
 
         AccountCreateDto createDto = new AccountCreateDto(
                 "Default account",

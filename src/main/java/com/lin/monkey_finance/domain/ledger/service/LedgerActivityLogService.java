@@ -2,12 +2,10 @@ package com.lin.monkey_finance.domain.ledger.service;
 
 import com.lin.monkey_finance.domain.ledger.dto.LedgerActivityLogResponseDto;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerActivityLogMapper;
-import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActionType;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActivityLog;
+import com.lin.monkey_finance.domain.ledger.model.LedgerMembership;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerActivityLogRepository;
-import com.lin.monkey_finance.domain.ledger.repository.LedgerMembershipRepository;
-import com.lin.monkey_finance.domain.user.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,16 +16,16 @@ import java.util.UUID;
 public class LedgerActivityLogService {
     private final LedgerActivityLogRepository logRepository;
     private final LedgerActivityLogMapper logMapper;
-    private final LedgerMembershipRepository memberRepository;
+    private final LedgerMembershipService membershipService;
 
     public LedgerActivityLogService(
             LedgerActivityLogRepository logRepository,
             LedgerActivityLogMapper logMapper,
-            LedgerMembershipRepository memberRepository
+            LedgerMembershipService membershipService
     ){
         this.logRepository = logRepository;
         this.logMapper = logMapper;
-        this.memberRepository = memberRepository;
+        this.membershipService = membershipService;
     }
 
     @Transactional(readOnly = true)
@@ -39,11 +37,13 @@ public class LedgerActivityLogService {
     }
 
     @Transactional
-    public LedgerActivityLogResponseDto create(Ledger ledger, User actor, UUID targetId, LedgerActionType actionType, String description){
+    public LedgerActivityLogResponseDto create(UUID ledgerId, UUID actorId, UUID targetId, LedgerActionType actionType, String description){
+
+        LedgerMembership membershipReference = membershipService.getReferenceById(ledgerId, actorId);
 
         LedgerActivityLog activityLog = new LedgerActivityLog(
-                ledger,
-                actor,
+                membershipReference.getLedger(),
+                membershipReference.getUser(),
                 targetId,
                 actionType,
                 description
