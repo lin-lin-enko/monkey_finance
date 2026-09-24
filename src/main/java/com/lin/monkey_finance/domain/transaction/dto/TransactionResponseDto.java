@@ -1,5 +1,6 @@
 package com.lin.monkey_finance.domain.transaction.dto;
 
+import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.transaction.model.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,8 @@ public record TransactionResponseDto(
 
         BigDecimal amount,
 
+        Currency currency,
+
         TransactionType type,
 
         UUID authorId,
@@ -35,5 +38,7 @@ public record TransactionResponseDto(
 
         UUID savingsPotId,
 
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+
+        OffsetDateTime updatedAt
 ) {}

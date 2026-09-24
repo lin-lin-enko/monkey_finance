@@ -4,8 +4,8 @@ import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
 import com.lin.monkey_finance.common.exception.InvalidStateException;
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
+import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.model.*;
-import com.lin.monkey_finance.domain.ledger.service.LedgerActivityLogService;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMembershipService;
 import com.lin.monkey_finance.domain.transaction.dto.*;
 import com.lin.monkey_finance.domain.transaction.mapper.CategoryMapper;
@@ -15,6 +15,7 @@ import com.lin.monkey_finance.domain.transaction.model.CategorySettings;
 import com.lin.monkey_finance.domain.transaction.model.CategorySettingsId;
 import com.lin.monkey_finance.domain.transaction.repository.CategoryRepository;
 import com.lin.monkey_finance.domain.transaction.repository.CategorySettingsRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class CategoryService {
     private final CategorySettingsRepository settingsRepository;
     private final CategorySettingsMapper settingsMapper;
     private final LedgerMembershipService membershipService;
-    private final LedgerActivityLogService activityLogService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CategoryService(
             CategoryRepository categoryRepository,
@@ -37,14 +38,14 @@ public class CategoryService {
             CategorySettingsRepository settingsRepository,
             CategorySettingsMapper settingsMapper,
             LedgerMembershipService membershipService,
-            LedgerActivityLogService activityLogService
+            ApplicationEventPublisher eventPublisher
     ){
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
         this.settingsRepository = settingsRepository;
         this.settingsMapper = settingsMapper;
         this.membershipService = membershipService;
-        this.activityLogService = activityLogService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -82,13 +83,13 @@ public class CategoryService {
             CategorySettings categorySettings = settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
                     .map(existingSettings -> {
                         settingsMapper.updateFromDto(dto, existingSettings);
-                        activityLogService.create(
+                        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                                 ledgerId,
                                 userId,
                                 categoryId,
                                 LedgerActionType.CATEGORY_EDITED,
                                 "Category settings were edited"
-                        );
+                        ));
                         return existingSettings;
                     })
                     .orElseGet(() -> {
@@ -103,13 +104,13 @@ public class CategoryService {
                                 dto.iconUrl() != null ? dto.iconUrl() : category.getIconUrl(),
                                 Boolean.TRUE.equals(dto.isHidden())
                         );
-                        activityLogService.create(
+                        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                                 ledgerId,
                                 userId,
                                 categoryId,
                                 LedgerActionType.CATEGORY_SETTINGS_ADDED,
                                 "Category settings were added"
-                        );
+                        ));
                         return settingsRepository.save(newSettings);
                     });
             return categoryMapper.toResponseDto(new CategoryWithSettingsDto(category, categorySettings));
@@ -118,13 +119,13 @@ public class CategoryService {
             if(category.getLedger() == null || !category.getLedger().getId().equals(ledgerId))
                 throw new ResourceNotFoundException("This category is not from this ledger");
             categoryMapper.updateFromDto(dto, category);
-            activityLogService.create(
+            eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
                     userId,
                     categoryId,
                     LedgerActionType.CATEGORY_EDITED,
                     "Category \"" + category.getName() + "\" was edited"
-            );
+            ));
             return categoryMapper.toResponseDto(category);
         }
 
@@ -140,24 +141,25 @@ public class CategoryService {
         if (category.isSystem()) {
             settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
                     .ifPresent(settingsRepository::delete);
-            activityLogService.create(
+
+            eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
                     userId,
                     categoryId,
                     LedgerActionType.CATEGORY_SETTINGS_DELETED,
                     "Category settings were deleted"
-            );
+            ));
         }
         else {
              if (category.getLedger() != null && !category.getLedger().getId().equals(ledgerId))
                  throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
-            activityLogService.create(
+            eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
                     userId,
                     categoryId,
                     LedgerActionType.CATEGORY_DELETED,
                     "Category " + category.getName() + " was deleted"
-            );
+            ));
             categoryRepository.delete(category);
         }
     }
@@ -181,13 +183,13 @@ public class CategoryService {
 
         Category savedCategory = categoryRepository.saveAndFlush(category);
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 savedCategory.getId(),
                 LedgerActionType.CATEGORY_CREATED,
                 "Category " + category.getName() + " was created"
-        );
+        ));
 
         return categoryMapper.toResponseDto(savedCategory);
     }
@@ -226,13 +228,15 @@ public class CategoryService {
         );
 
         Category savedSubcategory = categoryRepository.save(subcategory);
-        activityLogService.create(
+
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 savedSubcategory.getId(),
                 LedgerActionType.SUBCATEGORY_ADDED,
                 "Subcategory " + subcategory.getName() + " was added to the category " + parentCategory.getName()
-        );
+        ));
+
         return categoryMapper.toResponseDto(savedSubcategory);
     }
 
@@ -246,13 +250,13 @@ public class CategoryService {
 
         categoryMapper.updateFromDto(updateDto, subcategory);
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 subcategoryId,
                 LedgerActionType.SUBCATEGORY_EDITED,
                 "Subcategory was edited"
-        );
+        ));
         return categoryMapper.toResponseDto(subcategory);
     }
 
@@ -265,13 +269,13 @@ public class CategoryService {
             throw new ResourceNotFoundException("This subcategory doesn't belong to this category");
 
         categoryRepository.delete(subcategory);
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 subcategoryId,
                 LedgerActionType.SUBCATEGORY_DELETED,
                 "Subcategory was deleted"
-        );
+        ));
     }
 
     private void checkPermissions(UUID ledgerId, UUID userId){

@@ -8,6 +8,7 @@ import com.lin.monkey_finance.domain.user.model.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
@@ -34,16 +35,19 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column()
+    private Currency currency = Currency.EUR;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
 
+    @Column(name = "occurredAt")
+    private OffsetDateTime occurredAt = OffsetDateTime.now();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
-
-    @Column(name = "occurredAt")
-    private OffsetDateTime occurredAt = OffsetDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
@@ -69,12 +73,17 @@ public class Transaction {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
     protected Transaction(){}
 
     public Transaction(
             String name,
             String description,
             BigDecimal amount,
+            Currency currency,
             TransactionType type,
             User author,
             OffsetDateTime occurredAt,
@@ -87,6 +96,7 @@ public class Transaction {
         this.name = name;
         this.description = description;
         this.amount = amount;
+        this.currency = currency;
         this.type = type;
         this.author = author;
         this.occurredAt = occurredAt;
@@ -123,6 +133,14 @@ public class Transaction {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
     }
 
     public TransactionType getType() {
@@ -193,7 +211,7 @@ public class Transaction {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

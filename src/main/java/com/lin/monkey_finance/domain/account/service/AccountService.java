@@ -11,9 +11,10 @@ import com.lin.monkey_finance.domain.account.mapper.AccountMapper;
 import com.lin.monkey_finance.domain.account.model.Account;
 import com.lin.monkey_finance.domain.account.repository.AccountRepository;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
+import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.model.*;
-import com.lin.monkey_finance.domain.ledger.service.LedgerActivityLogService;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMembershipService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,19 +26,19 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccountMapper mapper;
-    private final LedgerActivityLogService activityLogService;
     private final LedgerMembershipService membershipService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AccountService(
             AccountRepository accountRepository,
             AccountMapper mapper,
-            LedgerActivityLogService activityLogService,
-            LedgerMembershipService membershipService
+            LedgerMembershipService membershipService,
+            ApplicationEventPublisher eventPublisher
     ){
         this.accountRepository = accountRepository;
         this.membershipService = membershipService;
         this.mapper = mapper;
-        this.activityLogService = activityLogService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -78,13 +79,13 @@ public class AccountService {
                 mapper.toEntity(createDto, membershipReference.getLedger())
         );
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 savedAccount.getId(),
                 LedgerActionType.ACCOUNT_ADDED,
                 "User added a " + savedAccount.getType().toString().toLowerCase() + " account to this ledger"
-        );
+        ));
         return mapper.toResponseDto(savedAccount);
     }
 
@@ -99,12 +100,13 @@ public class AccountService {
 
         mapper.updateFromDto(editDto, account);
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 account.getId(),
                 LedgerActionType.ACCOUNT_EDITED,
-                "User made changes to this account");
+                "User made changes to this account"
+        ));
         return mapper.toResponseDto(account);
     }
 
@@ -120,23 +122,35 @@ public class AccountService {
                     "This account doesn't belong to this ledger");
 
         accountRepository.delete(account);
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 account.getId(),
                 LedgerActionType.ACCOUNT_DELETED,
                 "User deleted this account"
-        );
+        ));
     }
 
     @Transactional(readOnly = true)
-    public AccountResponseDto getLedgerAccount(UUID userId, UUID ledgerId){
+    public AccountResponseDto getLedgerAccount(UUID ledgerId, UUID userId){
+        System.out.println("USER ID MEMBERSHIP        ");
+        System.out.print(userId.toString());
+        System.out.println("LEDGER ID MEMBERSHIP        ");
+        System.out.print(ledgerId.toString());
+
         membershipService.getReferenceById(ledgerId, userId);
         Account account = accountRepository.findByLedgerId(ledgerId)
                 .orElseThrow(() -> new ResourceNotFoundException("This ledger doesn't have an account or it wasn't found"));
 
         return mapper.toResponseDto(account);
     }
+
+    @Transactional(readOnly = true)
+    public boolean existsByLedger(UUID userId, UUID ledgerId){
+        membershipService.getReferenceById(ledgerId, userId);
+        return accountRepository.existsByLedger(ledgerId);
+    }
+
 
     private void checkPermissions(UUID ledgerId, UUID userId){
         LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);

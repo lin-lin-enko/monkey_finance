@@ -7,13 +7,16 @@ import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipInvitationDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipRequestDto;
+import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerMembershipMapper;
 import com.lin.monkey_finance.domain.ledger.model.*;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerMembershipRepository;
 import com.lin.monkey_finance.domain.user.model.User;
 import com.lin.monkey_finance.domain.user.service.UserService;
+import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,29 +30,31 @@ import java.util.UUID;
 @Service
 public class LedgerMembershipService {
 
-    private final LedgerService ledgerService;
     private final LedgerMembershipRepository membershipRepository;
     private final LedgerMembershipMapper mapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserService userService;
-    private final LedgerActivityLogService activityLogService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
     private static final Logger log = LoggerFactory.getLogger(LedgerMembershipService.class);
 
+
     public LedgerMembershipService(
-            LedgerService ledgerService,
             LedgerMembershipRepository membershipRepository,
             LedgerMembershipMapper mapper,
             SimpMessagingTemplate messagingTemplate,
             UserService userService,
-            LedgerActivityLogService activityLogService
+            ApplicationEventPublisher eventPublisher,
+            EntityManager entityManager
+
     ){
-        this.ledgerService = ledgerService;
         this.membershipRepository = membershipRepository;
         this.mapper = mapper;
         this.messagingTemplate = messagingTemplate;
-        this.activityLogService = activityLogService;
         this.userService = userService;
+        this.eventPublisher = eventPublisher;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -60,30 +65,35 @@ public class LedgerMembershipService {
             throw new ResourceNotFoundException("User is not a member of this ledger or user/ledger doesn't exist");
     }
 
+    @Transactional(readOnly = true)
+    public List<LedgerMembershipResponseDto> getCurrentUserLedgers(UUID userId){
+        return membershipRepository.findAllById_UserId(userId)
+                .stream().map(mapper::toResponseDto).toList();
+    }
+
     @Transactional
-    public LedgerMembershipResponseDto addByRegistration(UUID ledgerId, UUID creatorId) {
-        Ledger ledger = ledgerService.getReferenceById(ledgerId);
-        User user = userService.getReferenceById(creatorId);
+    public void addByRegistration(UUID ledgerId, UUID creatorId) {
+        Ledger ledger = entityManager.getReference(Ledger.class, ledgerId);
+        User creator = entityManager.getReference(User.class, creatorId);
 
         LedgerMembership ledgerMembership = new LedgerMembership(
                     ledger,
-                    user,
+                    creator,
                     true,
                     AccessType.OWNER,
                     null,
                     MemberStatus.ACTIVE
         );
 
-        LedgerMembership savedLedgerMembership = membershipRepository.saveAndFlush(ledgerMembership);
+        membershipRepository.saveAndFlush(ledgerMembership);
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 creatorId,
                 creatorId,
                 LedgerActionType.MEMBER_JOINED,
-                "Creator of the ledger joined");
-
-        return mapper.toResponseDto(savedLedgerMembership);
+                "Creator of the ledger joined"
+        ));
     }
 
     @Transactional
@@ -137,12 +147,13 @@ public class LedgerMembershipService {
             );
         }
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 UUID.fromString(targetUserId),
                 LedgerActionType.MEMBER_INVITED,
-                null);
+                null
+        ));
 
         return mapper.toResponseDto(savedLedgerMembership);
     }
@@ -158,13 +169,13 @@ public class LedgerMembershipService {
         if (ledgerMembership.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot accept the invitation with the status " + ledgerMembership.getStatus());
 
         ledgerMembership.acceptInvitation();
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 ledgerMembership.getId().getUserId(),
                 LedgerActionType.MEMBER_JOINED,
                 null
-        );
+        ));
         return mapper.toResponseDto(ledgerMembership);
     }
 
@@ -177,13 +188,13 @@ public class LedgerMembershipService {
         if (ledgerMembership.getStatus() == MemberStatus.ACTIVE) throw new InvalidStateException("The user is already a member this ledger");
         if (ledgerMembership.getStatus() != MemberStatus.PENDING) throw new InvalidStateException("Cannot decline the invitation with the status " + ledgerMembership.getStatus());
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 ledgerMembership.getId().getUserId(),
                 LedgerActionType.USER_DECLINED_INVITATION,
                 "The user decided to decline the invitation"
-        );
+        ));
         membershipRepository.delete(ledgerMembership);
     }
 
@@ -198,13 +209,13 @@ public class LedgerMembershipService {
             case MemberStatus.PENDING -> throw new InvalidStateException("The user hasn't yet accepted the invitation to the ledger");
         }
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 ledgerMembership.getId().getUserId(),
                 LedgerActionType.MEMBER_LEFT,
                 null
-        );
+        ));
 
         ledgerMembership.leaveLedger();
     }
@@ -222,13 +233,13 @@ public class LedgerMembershipService {
 
             targetUserMembership.blockMember(authorizedUserMembership.getUser());
 
-            activityLogService.create(
+            eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
                     authorizedUserId,
                     targetUserMembership.getUser().getId(),
                     LedgerActionType.MEMBER_BLOCKED,
                     null
-            );
+            ));
             return mapper.toResponseDto(targetUserMembership);
     }
 
@@ -242,13 +253,13 @@ public class LedgerMembershipService {
         }
 
         targetUserMembership.unblockMember();
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 targetUserId,
                 LedgerActionType.MEMBER_UNBLOCKED,
                 null
-        );
+        ));
 
         return mapper.toResponseDto(targetUserMembership);
     }
@@ -265,12 +276,13 @@ public class LedgerMembershipService {
 
         AccessType oldAccessType = targetUserMembership.getAccessType();
         targetUserMembership.setAccessType(targetAccessType);
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 targetUserId,
                 LedgerActionType.MEMBER_ACCESS_TYPE_CHANGED,
-                "Member's access type was changed from " + oldAccessType + " to " + targetAccessType);
+                "Member's access type was changed from " + oldAccessType + " to " + targetAccessType
+        ));
         return mapper.toResponseDto(targetUserMembership);
     }
 
@@ -284,13 +296,13 @@ public class LedgerMembershipService {
         }
 
         membershipRepository.delete(targetUserMembership);
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 targetUserId,
                 LedgerActionType.MEMBER_INVITATION_REVOKED,
                 "User's invitation was revoked"
-        );
+        ));
     }
 
     @Transactional
@@ -299,13 +311,13 @@ public class LedgerMembershipService {
         LedgerMembership targetUserMembership = getTargetUserMembership(ledgerId, targetUserId, authorizedUserId);
 
         targetUserMembership.deleteMember(authorizedUserMembership.getUser());
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 targetUserId,
                 LedgerActionType.MEMBER_DELETED,
                 "Member was deleted from the ledger"
-        );
+        ));
     }
 
     @Transactional
@@ -338,13 +350,13 @@ public class LedgerMembershipService {
             );
         }
 
-        activityLogService.create(
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 authorizedUserId,
                 targetUserId,
                 LedgerActionType.OWNERSHIP_TRANSFERRED,
                 "The previous owner decided to transfer their ownership. By default, the user who transfers their ownership becomes an admin of the ledger"
-        );
+        ));
 
         return mapper.toResponseDto(targetUserMembership);
     }
@@ -361,13 +373,6 @@ public class LedgerMembershipService {
         LedgerMembership ledgerMembership = membershipRepository.findDefaultLedgerMembershipByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user is not a member of this ledger or user/ledger don't exist"));
         return mapper.toResponseDto(ledgerMembership);
-    }
-
-    @Transactional(readOnly = true)
-    public List<LedgerMembershipResponseDto> getAllByUserId(UUID userId){
-        userService.getReferenceById(userId);
-
-        return membershipRepository.findAllById_UserId(userId).stream().map(mapper::toResponseDto).toList();
     }
 
     private LedgerMembership getAuthorizedUserMembership(UUID ledgerId, UUID authorizedUserId){

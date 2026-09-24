@@ -19,21 +19,21 @@ import java.util.UUID;
 @RequestMapping("/api/v1/ledgers")
 public class LedgerController {
     private final LedgerService ledgerService;
-    private final LedgerMembershipService ledgerMembershipService;
+    private final LedgerMembershipService membershipService;
 
     public LedgerController(
             LedgerService ledgerService,
-            LedgerMembershipService ledgerMembershipService
+            LedgerMembershipService membershipService
     ){
         this.ledgerService = ledgerService;
-        this.ledgerMembershipService = ledgerMembershipService;
+        this.membershipService = membershipService;
     }
 
     @GetMapping()
-    public ResponseEntity<List<LedgerResponseDto>> getCurrentUserLedgers(@AuthenticationPrincipal Jwt jwt){
+    public ResponseEntity<List<LedgerMembershipResponseDto>> getCurrentUserLedgers(@AuthenticationPrincipal Jwt jwt){
         UUID userId = UUID.fromString(jwt.getSubject());
 
-        List<LedgerResponseDto> ledgerResponseDtoList = ledgerService.getCurrentUserLedgers(userId);
+        List<LedgerMembershipResponseDto> ledgerResponseDtoList = membershipService.getCurrentUserLedgers(userId);
         return ResponseEntity.ok(ledgerResponseDtoList);
     }
 
@@ -50,6 +50,7 @@ public class LedgerController {
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
         LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, userId);
+        membershipService.addByRegistration(ledgerDetailedResponseDto.id(), userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ledgerDetailedResponseDto);
     }
 
@@ -81,7 +82,7 @@ public class LedgerController {
             @Valid @RequestBody LedgerMembershipRequestDto requestDto
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = ledgerMembershipService.add(requestDto, ledgerId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.add(requestDto, ledgerId, userId);
         return ResponseEntity.status(201).body(responseDto);
     }
 
@@ -91,7 +92,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        return ResponseEntity.ok(ledgerMembershipService.acceptInvitation(ledgerId, userId));
+        return ResponseEntity.ok(membershipService.acceptInvitation(ledgerId, userId));
     }
 
     @DeleteMapping("/invitations/{ledgerId}/decline")
@@ -100,7 +101,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        ledgerMembershipService.declineInvitation(ledgerId, userId);
+        membershipService.declineInvitation(ledgerId, userId);
         return ResponseEntity.ok("Invitation declined");
     }
 
@@ -110,7 +111,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        ledgerMembershipService.leaveLedger(ledgerId, userId);
+        membershipService.leaveLedger(ledgerId, userId);
         return ResponseEntity.ok("User successfully left the ledger");
     }
 
@@ -121,7 +122,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = ledgerMembershipService.block(ledgerId, targetUserId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.block(ledgerId, targetUserId, userId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -132,7 +133,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = ledgerMembershipService.unblock(ledgerId, targetUserId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.unblock(ledgerId, targetUserId, userId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -147,7 +148,7 @@ public class LedgerController {
         String accessType = body.get("accessType");
         AccessType targetAccessType = AccessType.fromString(accessType);
 
-        LedgerMembershipResponseDto responseDto = ledgerMembershipService.changeAccess(ledgerId, targetUserId, userId, targetAccessType);
+        LedgerMembershipResponseDto responseDto = membershipService.changeAccess(ledgerId, targetUserId, userId, targetAccessType);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -158,7 +159,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        ledgerMembershipService.revokeInvitation(ledgerId, targetUserId, userId);
+        membershipService.revokeInvitation(ledgerId, targetUserId, userId);
         return ResponseEntity.status(204).build();
     }
 
@@ -169,7 +170,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        ledgerMembershipService.deleteMember(ledgerId, targetUserId, userId);
+        membershipService.deleteMember(ledgerId, targetUserId, userId);
         return ResponseEntity.status(204).build();
     }
 
@@ -180,7 +181,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = ledgerMembershipService.transferOwnership(userId, targetUserId, ledgerId);
+        LedgerMembershipResponseDto responseDto = membershipService.transferOwnership(userId, targetUserId, ledgerId);
         return ResponseEntity.ok(responseDto);
     }
 }

@@ -1,11 +1,14 @@
 package com.lin.monkey_finance.domain.ledger.service;
 
 import com.lin.monkey_finance.domain.ledger.dto.LedgerActivityLogResponseDto;
+import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.mapper.LedgerActivityLogMapper;
-import com.lin.monkey_finance.domain.ledger.model.LedgerActionType;
+import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActivityLog;
-import com.lin.monkey_finance.domain.ledger.model.LedgerMembership;
 import com.lin.monkey_finance.domain.ledger.repository.LedgerActivityLogRepository;
+import com.lin.monkey_finance.domain.user.model.User;
+import jakarta.persistence.EntityManager;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +19,16 @@ import java.util.UUID;
 public class LedgerActivityLogService {
     private final LedgerActivityLogRepository logRepository;
     private final LedgerActivityLogMapper logMapper;
-    private final LedgerMembershipService membershipService;
+    private final EntityManager entityManager;
 
     public LedgerActivityLogService(
             LedgerActivityLogRepository logRepository,
             LedgerActivityLogMapper logMapper,
-            LedgerMembershipService membershipService
+            EntityManager entityManager
     ){
         this.logRepository = logRepository;
         this.logMapper = logMapper;
-        this.membershipService = membershipService;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -36,20 +39,20 @@ public class LedgerActivityLogService {
                 .toList();
     }
 
+    @EventListener
     @Transactional
-    public LedgerActivityLogResponseDto create(UUID ledgerId, UUID actorId, UUID targetId, LedgerActionType actionType, String description){
+    public void create(LedgerActivityLogEvent activityLogEvent){
 
-        LedgerMembership membershipReference = membershipService.getReferenceById(ledgerId, actorId);
-
+        Ledger ledger = entityManager.getReference(Ledger.class, activityLogEvent.ledgerId());
+        User actor = entityManager.getReference(User.class, activityLogEvent.actorId());
         LedgerActivityLog activityLog = new LedgerActivityLog(
-                membershipReference.getLedger(),
-                membershipReference.getUser(),
-                targetId,
-                actionType,
-                description
+                ledger,
+                actor,
+                activityLogEvent.targetId(),
+                activityLogEvent.actionType(),
+                activityLogEvent.description()
         );
 
-        LedgerActivityLog savedActivityLog = logRepository.save(activityLog);
-        return logMapper.toResponseDto(savedActivityLog);
+        logRepository.save(activityLog);
     }
 }

@@ -15,6 +15,8 @@ public interface AccountMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ledger", source = "ledger")
+    @Mapping(target = "name", source = "createDto.name")
+    @Mapping(target = "description", source = "createDto.description")
     Account toEntity(AccountCreateDto createDto, Ledger ledger);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

@@ -28,7 +28,7 @@ public class SavingsPot {
     @Size(min = 2, max = 50, message = "SavingsPot name must be 2 to 50 characters long")
     private String name;
 
-    @Column(length = 255)
+    @Column()
     @Size(min = 2, max = 255, message = "Description name must be 2 to 255 characters long")
     private String description;
 
