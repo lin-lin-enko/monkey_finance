@@ -8,6 +8,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -40,7 +41,7 @@ public class SavingsPot {
     private BigDecimal targetAmount;
 
     @Column(name = "due_date")
-    private OffsetDateTime dueDate;
+    private LocalDate dueDate;
 
     @Column(name = "percentage_rate")
     private BigDecimal percentageRate;
@@ -57,7 +58,7 @@ public class SavingsPot {
             String description,
             Currency currency,
             BigDecimal targetAmount,
-            OffsetDateTime dueDate,
+            LocalDate dueDate,
             BigDecimal percentageRate
     ){
         this.account = account;
@@ -113,11 +114,11 @@ public class SavingsPot {
         this.targetAmount = targetAmount;
     }
 
-    public OffsetDateTime getDueDate() {
+    public LocalDate getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(OffsetDateTime dueDate) {
+    public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
 

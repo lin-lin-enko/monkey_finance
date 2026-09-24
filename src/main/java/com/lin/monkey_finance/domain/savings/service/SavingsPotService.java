@@ -1,7 +1,9 @@
 package com.lin.monkey_finance.domain.savings.service;
 
 import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.domain.account.dto.AccountResponseDto;
 import com.lin.monkey_finance.domain.account.model.Account;
+import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.account.service.AccountService;
 import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActionType;
@@ -66,14 +68,15 @@ public class SavingsPotService {
     }
 
     @Transactional
-    public SavingsPotResponseDto create(UUID userId, UUID accountId, SavingsPotCreateDto createDto){
-        Account account = accountService.getReferenceById(accountId);
+    public SavingsPotResponseDto create(UUID userId, UUID ledgerId, SavingsPotCreateDto createDto){
+        AccountResponseDto accountResponseDto = accountService.getLedgerAccount(ledgerId, userId);
+        Account account = accountService.getReferenceById(accountResponseDto.id());
 
         SavingsPot savingsPot = new SavingsPot(
                 account,
                 createDto.name(),
                 createDto.description(),
-                createDto.currency(),
+                createDto.currency() == null ? account.getCurrency() : createDto.currency(),
                 createDto.targetAmount(),
                 createDto.dueDate(),
                 createDto.percentageRate()

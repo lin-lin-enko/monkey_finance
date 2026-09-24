@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 public record SavingsPotCreateDto(
@@ -16,13 +17,12 @@ public record SavingsPotCreateDto(
     @Size(min = 2, max = 255, message = "Description name must be 2 to 255 characters long")
     String description,
 
-    @NotBlank
     Currency currency,
 
     @NotNull
     BigDecimal targetAmount,
 
-    OffsetDateTime dueDate,
+    LocalDate dueDate,
 
     BigDecimal percentageRate
 ){}
