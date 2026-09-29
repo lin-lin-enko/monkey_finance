@@ -58,4 +58,16 @@ public class SavingsPotController {
         SavingsPotResponseDto responseDto = savingsPotService.edit(userId, ledgerId, savingsPotId, updateDto);
         return ResponseEntity.ok(responseDto);
     }
+
+    @DeleteMapping("/{savingsPotId}")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID ledgerId,
+            @PathVariable UUID savingsPotId
+    )
+    {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        savingsPotService.delete(userId, ledgerId, savingsPotId);
+        return ResponseEntity.status(204).build();
+    }
 }

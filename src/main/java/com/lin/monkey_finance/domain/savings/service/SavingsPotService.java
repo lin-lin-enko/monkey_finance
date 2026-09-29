@@ -122,6 +122,15 @@ public class SavingsPotService {
         return mapper.toResponseDto(savingsPot);
     }
 
+    @Transactional
+    public void delete(UUID userId, UUID ledgerId, UUID savingsPotId){
+        checkIsAdminOrOwner(ledgerId, userId);
+
+        if (!savingsPotRepository.existsById(savingsPotId))
+            throw new ResourceNotFoundException("No savings pot with such id");
+        savingsPotRepository.deleteById(savingsPotId);
+    }
+
     private LedgerMembershipResponseDto checkMembership(UUID ledgerId, UUID userId){
         LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);
         if (membershipResponseDto.status() != MemberStatus.ACTIVE)
