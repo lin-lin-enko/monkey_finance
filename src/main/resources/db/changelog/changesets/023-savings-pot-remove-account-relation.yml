@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-savings-pot-remove-account-relation
+      author: alina
+      changes:
+        - dropColumn:
+            schemaName: dev
+            tableName: savings_pots
+            columnName: account_id

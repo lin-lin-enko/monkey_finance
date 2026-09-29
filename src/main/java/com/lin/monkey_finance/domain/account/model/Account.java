@@ -3,8 +3,12 @@ package com.lin.monkey_finance.domain.account.model;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -42,6 +46,14 @@ public class Account {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ledger_id")
     private Ledger ledger;
+
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     protected Account(){}
 
@@ -121,5 +133,13 @@ public class Account {
 
     public void setLedger(Ledger ledger) {
         this.ledger = ledger;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

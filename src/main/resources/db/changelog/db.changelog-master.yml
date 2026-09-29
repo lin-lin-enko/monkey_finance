@@ -41,3 +41,9 @@ databaseChangeLog:
       file: db/changelog/changesets/020-create-table-transactions.yml
   - include:
       file: db/changelog/changesets/021-rename-savings-pots-table-field.yml
+  - include:
+      file: db/changelog/changesets/022-add-created-at-updated-at.yml
+  - include:
+      file: db/changelog/changesets/023-savings-pot-remove-account-relation.yml
+  - include:
+      file: db/changelog/changesets/024-savings-pot-add-ledger-relation.yml

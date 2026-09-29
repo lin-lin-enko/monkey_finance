@@ -148,7 +148,7 @@ public class AccountService {
     @Transactional(readOnly = true)
     public boolean existsByLedger(UUID userId, UUID ledgerId){
         membershipService.getReferenceById(ledgerId, userId);
-        return accountRepository.existsByLedger(ledgerId);
+        return accountRepository.existsByLedgerId(ledgerId);
     }
 
 

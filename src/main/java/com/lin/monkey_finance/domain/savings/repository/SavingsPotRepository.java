@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface SavingsPotRepository extends JpaRepository<SavingsPot, UUID>{
-    List<SavingsPot> findAllByAccountId(UUID accountId);
+    List<SavingsPot> findAllByLedgerId(UUID ledgerId);
 }

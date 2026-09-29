@@ -4,6 +4,7 @@ import com.lin.monkey_finance.domain.account.model.AccountType;
 import com.lin.monkey_finance.domain.account.model.Currency;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record AccountResponseDto(
@@ -14,5 +15,7 @@ public record AccountResponseDto(
    BigDecimal balance,
    Currency currency,
    String description,
-   UUID ledgerId
+   UUID ledgerId,
+   OffsetDateTime createdAt,
+   OffsetDateTime updatedAt
 ) {}

@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
     List<Account> findAllByLedgerId(UUID ledgerId);
     Optional<Account> findByLedgerId(UUID ledgerId);
-    boolean existsByLedger(UUID ledgerId);
+    boolean existsByLedgerId(UUID ledgerId);
     Account getReferenceByLedger(UUID ledgerId);
 }

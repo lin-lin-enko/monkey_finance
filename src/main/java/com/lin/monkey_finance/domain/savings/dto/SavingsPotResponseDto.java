@@ -10,12 +10,12 @@ import java.util.UUID;
 public record SavingsPotResponseDto(
 
         UUID id,
-        UUID accountId,
         String name,
         String description,
         Currency currency,
         BigDecimal targetAmount,
         LocalDate dueDate,
         BigDecimal percentageRate,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt
 ) {}

@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-savings-pot-add-ledger-relation
+      author: alina
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: savings_pots
+            columns:
+              - column:
+                  name: ledger_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    referencedSchemaName: dev
+                    referencedTableName: ledgers
+                    referencedColumnNames: id
+                    foreignKeyName: fk_savings_pots_ledger
+                    onDelete: CASCADE
+
+        - createIndex:
+            schemaName: dev
+            tableName: savings_pots
+            indexName: idx_savings_pots_ledger_id
+            columns:
+              - column: {name: ledger_id}

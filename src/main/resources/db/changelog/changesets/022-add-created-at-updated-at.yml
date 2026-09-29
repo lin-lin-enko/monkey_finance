@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 022-add-created-at-updated-at
+      author: alina
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: savings_pots
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamptz
+        - addColumn:
+            schemaName: dev
+            tableName: accounts
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamptz
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValue: now()
+                  constraints:
+                    nullable: false
+        - addColumn:
+            schemaName: dev
+            tableName: transactions
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamptz
