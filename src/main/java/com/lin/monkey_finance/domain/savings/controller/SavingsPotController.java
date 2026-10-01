@@ -32,7 +32,7 @@ public class SavingsPotController {
             @PathVariable UUID ledgerId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        List<SavingsPotResponseDto> responseDtoList = savingsPotService.getAll(userId, ledgerId);
+        List<SavingsPotResponseDto> responseDtoList = savingsPotService.getAll(ledgerId, userId);
         return ResponseEntity.ok(responseDtoList);
     }
 
@@ -43,7 +43,7 @@ public class SavingsPotController {
             @PathVariable UUID ledgerId
             ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        SavingsPotResponseDto responseDto = savingsPotService.create(userId, ledgerId, createDto);
+        SavingsPotResponseDto responseDto = savingsPotService.create(ledgerId, userId, createDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
@@ -55,7 +55,7 @@ public class SavingsPotController {
             @PathVariable UUID savingsPotId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        SavingsPotResponseDto responseDto = savingsPotService.edit(userId, ledgerId, savingsPotId, updateDto);
+        SavingsPotResponseDto responseDto = savingsPotService.edit(ledgerId, userId, savingsPotId, updateDto);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -67,7 +67,7 @@ public class SavingsPotController {
     )
     {
         UUID userId = UUID.fromString(jwt.getSubject());
-        savingsPotService.delete(userId, ledgerId, savingsPotId);
+        savingsPotService.delete(ledgerId, userId, savingsPotId);
         return ResponseEntity.status(204).build();
     }
 }

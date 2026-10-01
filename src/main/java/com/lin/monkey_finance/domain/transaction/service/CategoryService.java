@@ -1,12 +1,9 @@
 package com.lin.monkey_finance.domain.transaction.service;
 
-import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
-import com.lin.monkey_finance.common.exception.InvalidStateException;
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
+import com.lin.monkey_finance.common.exception.BadRequestException;
+import com.lin.monkey_finance.domain.account.dto.CategoryValidationObject;
 import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.model.*;
-import com.lin.monkey_finance.domain.ledger.service.LedgerMembershipService;
 import com.lin.monkey_finance.domain.transaction.dto.*;
 import com.lin.monkey_finance.domain.transaction.mapper.CategoryMapper;
 import com.lin.monkey_finance.domain.transaction.mapper.CategorySettingsMapper;
@@ -15,9 +12,12 @@ import com.lin.monkey_finance.domain.transaction.model.CategorySettings;
 import com.lin.monkey_finance.domain.transaction.model.CategorySettingsId;
 import com.lin.monkey_finance.domain.transaction.repository.CategoryRepository;
 import com.lin.monkey_finance.domain.transaction.repository.CategorySettingsRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.lin.monkey_finance.common.exception.IllegalArgumentException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,60 +25,75 @@ import java.util.UUID;
 
 @Service
 public class CategoryService {
-    private final CategoryRepository categoryRepository;
+    private final CategoryRepository repository;
     private final CategoryMapper categoryMapper;
     private final CategorySettingsRepository settingsRepository;
     private final CategorySettingsMapper settingsMapper;
-    private final LedgerMembershipService membershipService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
     public CategoryService(
-            CategoryRepository categoryRepository,
+            CategoryRepository repository,
             CategoryMapper categoryMapper,
             CategorySettingsRepository settingsRepository,
             CategorySettingsMapper settingsMapper,
-            LedgerMembershipService membershipService,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            EntityManager entityManager
     ){
-        this.categoryRepository = categoryRepository;
+        this.repository = repository;
         this.categoryMapper = categoryMapper;
         this.settingsRepository = settingsRepository;
         this.settingsMapper = settingsMapper;
-        this.membershipService = membershipService;
         this.eventPublisher = eventPublisher;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
-    public Category getReferenceById(UUID categoryId){
-        if (categoryRepository.existsById(categoryId))
-            return categoryRepository.getReferenceById(categoryId);
-        else throw new ResourceNotFoundException("No category/subcategory with such id");
+    public CategoryValidationObject validateAndGet(UUID ledgerId, UUID categoryId, UUID subcategoryId){
+        Category category = repository.findById(categoryId)
+                .orElseThrow(() -> new BadRequestException("No category with such id"));
+        if (!category.isSystem())
+            if (category.getLedger() == null || !category.getLedger().getId().equals(ledgerId))
+                throw new BadRequestException("This category doesn't belong to this ledger");
+
+        if (subcategoryId != null){
+            if (categoryId.equals(subcategoryId))
+                throw new IllegalArgumentException("Category and subcategory can't be the same");
+
+            Category subcategory = repository.findById(subcategoryId)
+                    .orElseThrow(() -> new BadRequestException("No subcategory with such id"));
+
+            if (subcategory.getParent() == null || !subcategory.getParent().getId().equals(categoryId))
+                throw new BadRequestException("This subcategory doesn't belong to this category");
+
+            if (!subcategory.isSystem())
+                if (subcategory.getLedger() == null || !subcategory.getLedger().getId().equals(ledgerId))
+                    throw new BadRequestException("This subcategory doesn't belong to this ledger");
+
+            return new CategoryValidationObject(category, subcategory);
+        }
+
+        return new CategoryValidationObject(category, null);
     }
 
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getSystemCategories(){
-        return categoryRepository.findAllByIsSystemTrue()
+        return repository.findAllByIsSystemTrue()
                 .stream().map(categoryMapper::toResponseDto).toList();
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("@ledgerSecurity.isActiveMember(#ledgerId, #userId)")
     public List<CategoryResponseDto> getLedgerCategories(UUID ledgerId, UUID userId){
-        membershipService.getReferenceById(ledgerId, userId);
-        return categoryRepository.findAllWithSettingsByLedgerId(ledgerId)
+        return repository.findAllWithSettingsByLedgerId(ledgerId)
                 .stream().map(categoryMapper::toResponseDto).toList();
     }
 
     @Transactional
-    public CategoryResponseDto editCategory(UUID ledgerId, UUID categoryId, CategoryUpdateDto dto, UUID userId){
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public CategoryResponseDto editCategory(UUID ledgerId, UUID userId, UUID categoryId, CategoryUpdateDto dto){
 
-        checkPermissions(ledgerId, userId);
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("No category with such id"));
-
-        if (category.getLedger() != null && !category.getLedger().getId().equals(ledgerId))
-            throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
-
+        Category category = validateAndGet(ledgerId, categoryId, null).category();
         if (category.isSystem()){
             CategorySettings categorySettings = settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
                     .map(existingSettings -> {
@@ -116,8 +131,6 @@ public class CategoryService {
             return categoryMapper.toResponseDto(new CategoryWithSettingsDto(category, categorySettings));
         }
         else {
-            if(category.getLedger() == null || !category.getLedger().getId().equals(ledgerId))
-                throw new ResourceNotFoundException("This category is not from this ledger");
             categoryMapper.updateFromDto(dto, category);
             eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
@@ -132,11 +145,9 @@ public class CategoryService {
     }
 
     @Transactional
-    public void deleteCategory(UUID ledgerId, UUID categoryId, UUID userId){
-        checkPermissions(ledgerId, userId);
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("No category with such id"));
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public void deleteCategory(UUID ledgerId, UUID userId, UUID categoryId){
+        Category category = validateAndGet(ledgerId, categoryId, null).category();
 
         if (category.isSystem()) {
             settingsRepository.findById(new CategorySettingsId(ledgerId, categoryId))
@@ -151,8 +162,6 @@ public class CategoryService {
             ));
         }
         else {
-             if (category.getLedger() != null && !category.getLedger().getId().equals(ledgerId))
-                 throw new IllegalArgumentException("This category doesn't belong to this ledger and is not a custom category");
             eventPublisher.publishEvent(new LedgerActivityLogEvent(
                     ledgerId,
                     userId,
@@ -160,28 +169,27 @@ public class CategoryService {
                     LedgerActionType.CATEGORY_DELETED,
                     "Category " + category.getName() + " was deleted"
             ));
-            categoryRepository.delete(category);
+            repository.delete(category);
         }
     }
 
     @Transactional
-    public CategoryResponseDto createCategory(UUID ledgerId, UUID userId, CategoryCreateDto requestDto){
-        checkPermissions(ledgerId, userId);
-        LedgerMembership membershipReference = membershipService.getReferenceById(ledgerId, userId);
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public CategoryResponseDto createCategory(UUID ledgerId, UUID userId, CategoryCreateDto createDto){
         Category category = new Category(
-                membershipReference.getLedger(),
+                entityManager.getReference(Ledger.class, ledgerId),
                 null,
-                requestDto.name(),
-                requestDto.description(),
-                requestDto.fillColor() != null ? requestDto.fillColor() : "#000000",
-                requestDto.fontColor() != null ? requestDto.fontColor() : "#ffffff",
-                requestDto.iconUrl(),
+                createDto.name(),
+                createDto.description(),
+                createDto.fillColor() != null ? createDto.fillColor() : "#000000",
+                createDto.fontColor() != null ? createDto.fontColor() : "#ffffff",
+                createDto.iconUrl(),
                 false,
-                requestDto.type(),
+                createDto.type(),
                 new ArrayList<>()
         );
 
-        Category savedCategory = categoryRepository.saveAndFlush(category);
+        Category savedCategory = repository.saveAndFlush(category);
 
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
@@ -195,60 +203,46 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResponseDto createSubcategory(UUID ledgerId, UUID parentId, UUID userId, SubcategoryCreateDto requestDto){
-        checkPermissions(ledgerId, userId);
-        Category parentCategory = categoryRepository.findById(parentId)
-                .orElseThrow(() -> new ResourceNotFoundException("No category with such id"));
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public CategoryResponseDto createSubcategory(UUID ledgerId, UUID userId, UUID parentId, SubcategoryCreateDto createDto){
+        CategoryValidationObject categoryValidationObject = validateAndGet(ledgerId, parentId, null);
+        Category category = categoryValidationObject.category();
 
-        if (parentCategory.getParent() != null)
+        if (category.getParent() != null)
             throw new IllegalArgumentException("Can't create a subcategory of a subcategory");
 
-        if (!parentCategory.isSystem() && (parentCategory.getLedger() == null || !parentCategory.getLedger().getId().equals(ledgerId)))
-            throw new ResourceNotFoundException("This category doesn't belong to this ledger");
-
-        LedgerMembership memberShipReference = membershipService.getReferenceById(ledgerId, userId);
         Category subcategory = new Category(
-                memberShipReference.getLedger(),
-                parentCategory,
-                requestDto.name(),
-                requestDto.description(),
-                parentCategory.getFillColor(),
-                parentCategory.getFontColor(),
-                requestDto.iconUrl(),
+                entityManager.getReference(Ledger.class, ledgerId),
+                categoryValidationObject.category(),
+                createDto.name(),
+                createDto.description(),
+                createDto.fillColor() != null ? createDto.fillColor() :  category.getFillColor(),
+                createDto.fontColor()!= null ? createDto.fontColor() : category.getFontColor(),
+                createDto.iconUrl(),
                 false,
-                parentCategory.getType(),
+                categoryValidationObject.category().getType(),
                 new ArrayList<>()
         );
 
-        settingsRepository.findById(new CategorySettingsId(ledgerId, parentCategory.getId())).ifPresent(
-                settings -> {
-                    if (settings.getCustomFillColor() != null) subcategory.setFillColor(settings.getCustomFillColor());
-                    if(settings.getCustomFontColor() != null) subcategory.setFontColor(settings.getCustomFontColor());
-                }
-        );
-
-        Category savedSubcategory = categoryRepository.save(subcategory);
+        Category savedSubcategory = repository.save(subcategory);
 
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
                 savedSubcategory.getId(),
                 LedgerActionType.SUBCATEGORY_ADDED,
-                "Subcategory " + subcategory.getName() + " was added to the category " + parentCategory.getName()
+                "Subcategory " + subcategory.getName() + " was added to the category " + category.getName()
         ));
 
         return categoryMapper.toResponseDto(savedSubcategory);
     }
 
     @Transactional
-    public CategoryResponseDto editSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId, SubcategoryUpdateDto updateDto ){
-        checkPermissions(ledgerId, userId);
-        Category subcategory = categoryRepository.findById(subcategoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("No subcategory with such id"));
-        if (subcategory.getParent() == null || !categoryId.equals(subcategory.getParent().getId()))
-            throw new ResourceNotFoundException("This subcategory doesn't belong to this category");
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public CategoryResponseDto editSubcategory(UUID ledgerId, UUID userId, UUID categoryId, UUID subcategoryId, SubcategoryUpdateDto updateDto ){
+        CategoryValidationObject categoryValidationObject = validateAndGet(ledgerId, categoryId, subcategoryId);
 
-        categoryMapper.updateFromDto(updateDto, subcategory);
+        categoryMapper.updateFromDto(updateDto, categoryValidationObject.subcategory());
 
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
@@ -257,18 +251,15 @@ public class CategoryService {
                 LedgerActionType.SUBCATEGORY_EDITED,
                 "Subcategory was edited"
         ));
-        return categoryMapper.toResponseDto(subcategory);
+        return categoryMapper.toResponseDto(categoryValidationObject.subcategory());
     }
 
     @Transactional
-    public void deleteSubcategory(UUID ledgerId, UUID categoryId, UUID subcategoryId, UUID userId){
-        checkPermissions(ledgerId, userId);
-        Category subcategory = categoryRepository.findById(subcategoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("No subcategory with such id"));
-        if (subcategory.getParent() == null || !categoryId.equals(subcategory.getParent().getId()))
-            throw new ResourceNotFoundException("This subcategory doesn't belong to this category");
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public void deleteSubcategory(UUID ledgerId, UUID userId, UUID categoryId, UUID subcategoryId){
+        CategoryValidationObject categoryValidationObject = validateAndGet(ledgerId, categoryId, subcategoryId);
 
-        categoryRepository.delete(subcategory);
+        repository.delete(categoryValidationObject.subcategory());
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
                 userId,
@@ -276,15 +267,5 @@ public class CategoryService {
                 LedgerActionType.SUBCATEGORY_DELETED,
                 "Subcategory was deleted"
         ));
-    }
-
-    private void checkPermissions(UUID ledgerId, UUID userId){
-        LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);
-
-        if (membershipResponseDto.accessType() != AccessType.ADMIN && membershipResponseDto.accessType() != AccessType.OWNER)
-            throw new InsufficientPermissionsException("Only admins and owners can perform this action");
-
-        if (membershipResponseDto.status() != MemberStatus.ACTIVE)
-            throw new InvalidStateException("Only active users can perform this action");
     }
 }

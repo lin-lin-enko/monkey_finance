@@ -32,7 +32,7 @@ public class AccountController{
             @PathVariable UUID ledgerId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        List<AccountResponseDto> accounts = accountService.getAll(userId, ledgerId);
+        List<AccountResponseDto> accounts = accountService.getAll(ledgerId, userId);
         return ResponseEntity.ok(accounts);
     }
 
@@ -43,7 +43,7 @@ public class AccountController{
             @Valid @RequestBody AccountCreateDto createDto
             ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        AccountResponseDto responseDto = accountService.create(userId, ledgerId, createDto);
+        AccountResponseDto responseDto = accountService.create(ledgerId, userId, createDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
@@ -55,7 +55,7 @@ public class AccountController{
             @PathVariable UUID accountId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        AccountResponseDto responseDto = accountService.edit(userId, ledgerId, accountId, editDto);
+        AccountResponseDto responseDto = accountService.edit(ledgerId, userId, accountId, editDto);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -66,7 +66,7 @@ public class AccountController{
             @PathVariable UUID accountId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        accountService.delete(userId, ledgerId, accountId);
+        accountService.delete(ledgerId, userId, accountId);
         return ResponseEntity.status(204).build();
     }
 

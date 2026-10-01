@@ -2,8 +2,6 @@ package com.lin.monkey_finance.domain.transaction.dto;
 
 import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.transaction.model.TransactionType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -28,8 +26,6 @@ public record TransactionUpdateDto(
         UUID categoryId,
 
         UUID subcategoryId,
-
-        UUID ledgerId,
 
         UUID accountId,
 

@@ -48,7 +48,7 @@ public class CategoryController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        CategoryResponseDto responseDto = categoryService.editCategory(ledgerId, categoryId, requestDto, userId);
+        CategoryResponseDto responseDto = categoryService.editCategory(ledgerId, userId,categoryId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -59,7 +59,7 @@ public class CategoryController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        categoryService.deleteCategory(ledgerId, categoryId, userId);
+        categoryService.deleteCategory(ledgerId, userId, categoryId);
         return ResponseEntity.status(204).build();
     }
 
@@ -82,7 +82,7 @@ public class CategoryController {
             @PathVariable UUID categoryId
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        CategoryResponseDto responseDto = categoryService.createSubcategory(ledgerId, categoryId, userId, requestDto);
+        CategoryResponseDto responseDto = categoryService.createSubcategory(ledgerId, userId, categoryId, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
@@ -95,7 +95,7 @@ public class CategoryController {
             @PathVariable UUID subcategoryId
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        CategoryResponseDto responseDto = categoryService.editSubcategory(ledgerId, categoryId, subcategoryId, userId, requestDto);
+        CategoryResponseDto responseDto = categoryService.editSubcategory(ledgerId, userId, categoryId, subcategoryId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -107,7 +107,7 @@ public class CategoryController {
             @PathVariable UUID subcategoryId
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        categoryService.deleteSubcategory(ledgerId, categoryId, subcategoryId, userId);
+        categoryService.deleteSubcategory(ledgerId, userId, categoryId, subcategoryId);
         return ResponseEntity.status(204).build();
     }
 }

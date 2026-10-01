@@ -33,24 +33,17 @@ public class LedgerController {
     public ResponseEntity<List<LedgerMembershipResponseDto>> getCurrentUserLedgers(@AuthenticationPrincipal Jwt jwt){
         UUID userId = UUID.fromString(jwt.getSubject());
 
-        List<LedgerMembershipResponseDto> ledgerResponseDtoList = membershipService.getCurrentUserLedgers(userId);
+        List<LedgerMembershipResponseDto> ledgerResponseDtoList = membershipService.getAllUserLedgers(userId);
         return ResponseEntity.ok(ledgerResponseDtoList);
-    }
-
-    @GetMapping("/{ledgerId}")
-    public ResponseEntity<LedgerDetailedResponseDto> getLedgerById(@PathVariable UUID ledgerId) {
-        LedgerDetailedResponseDto dto = ledgerService.getById(ledgerId);
-        return ResponseEntity.ok(dto);
     }
 
     @PostMapping()
     public ResponseEntity<LedgerDetailedResponseDto> create(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestBody LedgerRequestDto ledgerRequestDto
+            @RequestBody LedgerCreateDto createDto
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, userId);
-        membershipService.addByRegistration(ledgerDetailedResponseDto.id(), userId);
+        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(userId, createDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ledgerDetailedResponseDto);
     }
 
@@ -58,10 +51,10 @@ public class LedgerController {
     public ResponseEntity<LedgerDetailedResponseDto> edit(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID ledgerId,
-            @RequestBody @Valid LedgerUpdateDto ledgerUpdateDto
+            @RequestBody @Valid LedgerUpdateDto updateDto
             ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.edit(ledgerUpdateDto, userId, ledgerId);
+        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.edit(ledgerId, userId, updateDto);
         return ResponseEntity.ok(ledgerDetailedResponseDto);
     }
 
@@ -71,18 +64,18 @@ public class LedgerController {
             @PathVariable UUID ledgerId
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        ledgerService.delete(userId, ledgerId);
+        ledgerService.delete(ledgerId, userId);
         return ResponseEntity.status(204).build();
     }
 
     @PostMapping("/{ledgerId}/members")
     public ResponseEntity<LedgerMembershipResponseDto> addMember(
-            @PathVariable UUID ledgerId,
             @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID ledgerId,
             @Valid @RequestBody LedgerMembershipRequestDto requestDto
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = membershipService.add(requestDto, ledgerId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.add(ledgerId, userId, requestDto);
         return ResponseEntity.status(201).body(responseDto);
     }
 
@@ -122,7 +115,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = membershipService.block(ledgerId, targetUserId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.block(ledgerId, userId, targetUserId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -133,7 +126,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = membershipService.unblock(ledgerId, targetUserId, userId);
+        LedgerMembershipResponseDto responseDto = membershipService.unblock(ledgerId, userId, targetUserId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -148,7 +141,7 @@ public class LedgerController {
         String accessType = body.get("accessType");
         AccessType targetAccessType = AccessType.fromString(accessType);
 
-        LedgerMembershipResponseDto responseDto = membershipService.changeAccess(ledgerId, targetUserId, userId, targetAccessType);
+        LedgerMembershipResponseDto responseDto = membershipService.changeAccess(ledgerId, userId, targetUserId, targetAccessType);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -159,18 +152,18 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        membershipService.revokeInvitation(ledgerId, targetUserId, userId);
+        membershipService.revokeInvitation(ledgerId, userId, targetUserId);
         return ResponseEntity.status(204).build();
     }
 
     @DeleteMapping("/{ledgerId}/members/{targetUserId}")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<Void> deleteMember(
             @PathVariable UUID ledgerId,
             @PathVariable UUID targetUserId,
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        membershipService.deleteMember(ledgerId, targetUserId, userId);
+        membershipService.deleteMember(ledgerId, userId, targetUserId);
         return ResponseEntity.status(204).build();
     }
 
@@ -181,7 +174,7 @@ public class LedgerController {
             @AuthenticationPrincipal Jwt jwt
     ){
         UUID userId = UUID.fromString(jwt.getSubject());
-        LedgerMembershipResponseDto responseDto = membershipService.transferOwnership(userId, targetUserId, ledgerId);
+        LedgerMembershipResponseDto responseDto = membershipService.transferOwnership(ledgerId, userId, targetUserId);
         return ResponseEntity.ok(responseDto);
     }
 }

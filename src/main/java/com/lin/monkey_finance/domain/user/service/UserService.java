@@ -1,6 +1,6 @@
 package com.lin.monkey_finance.domain.user.service;
 
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.common.exception.BadRequestException;
 import com.lin.monkey_finance.domain.user.dto.UserResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserUpdateDto;
 import com.lin.monkey_finance.domain.user.mapper.UserMapper;
@@ -27,27 +27,24 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponseDto getById(UUID userId){
-        User user = userRepository.findById(userId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException(
-                                "No user with such id"
-                        )
-                );
-        return mapper.toResponseDto(user);
+        return mapper.toResponseDto(validateAndGetById(userId));
     }
 
     @Transactional(readOnly = true)
-    public User getReferenceById(UUID userId){
-        if (userRepository.existsById(userId))
-            return userRepository.getReferenceById(userId);
-        else throw new ResourceNotFoundException("No user with such id");
+    public User validateAndGetById(UUID userId){
+        return userRepository.findById(userId)
+                .orElseThrow(
+                        () -> new BadRequestException(
+                                "No user with such id"
+                        )
+                );
     }
 
     @Transactional(readOnly = true)
     public UserResponseDto getByEmail(String email){
         User user = userRepository.findByEmail(email)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
+                        () -> new BadRequestException(
                                 "No user with such email " + email
                         )
                 );
@@ -63,7 +60,7 @@ public class UserService {
     public UserResponseDto edit(UUID userId, UserUpdateDto userUpdateDto){
         User user = userRepository.findById(userId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
+                        () -> new BadRequestException(
                                 "No user with such id"
                         )
                 );
@@ -77,7 +74,7 @@ public class UserService {
     public UserResponseDto delete(UUID userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
+                        () -> new BadRequestException(
                                 "No user with such id"
                         )
                 );

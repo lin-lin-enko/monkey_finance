@@ -1,7 +1,7 @@
 package com.lin.monkey_finance.domain.transaction.service;
 
 
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.common.exception.BadRequestException;
 import com.lin.monkey_finance.domain.account.dto.CurrencyExchangeResponseDto;
 import com.lin.monkey_finance.domain.account.model.Currency;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -62,7 +62,7 @@ public class CurrencyConverterService {
         // getting needed currency rate
         BigDecimal rate = responseDto.conversionRates().get(to.name());
         if (rate == null)
-            throw new ResourceNotFoundException("No rate for this currency: " + to);
+            throw new BadRequestException("No rate for this currency: " + to);
 
         return amount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
     }

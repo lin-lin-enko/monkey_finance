@@ -13,4 +13,4 @@ public record UserLoginDto (
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 100, message = "Password must be 8 to 100 characters long")
     String password
-){};
+){}

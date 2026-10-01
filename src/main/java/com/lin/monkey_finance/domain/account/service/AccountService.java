@@ -3,7 +3,7 @@ package com.lin.monkey_finance.domain.account.service;
 import com.lin.monkey_finance.common.exception.AccessDeniedException;
 import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
 import com.lin.monkey_finance.common.exception.InvalidStateException;
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.common.exception.BadRequestException;
 import com.lin.monkey_finance.domain.account.dto.AccountCreateDto;
 import com.lin.monkey_finance.domain.account.dto.AccountEditDto;
 import com.lin.monkey_finance.domain.account.dto.AccountResponseDto;
@@ -36,44 +36,39 @@ public class AccountService {
             ApplicationEventPublisher eventPublisher
     ){
         this.accountRepository = accountRepository;
-        this.membershipService = membershipService;
         this.mapper = mapper;
+        this.membershipService = membershipService;
         this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
-    public AccountResponseDto getById(UUID userId, UUID ledgerId, UUID accountId){
+    public AccountResponseDto getById(UUID ledgerId, UUID userId, UUID accountId){
+        return mapper.toResponseDto(validateAndGet(ledgerId, userId, accountId));
+    }
+
+    @Transactional(readOnly = true)
+    public Account validateAndGet(UUID ledgerId, UUID userId, UUID accountId){
+        checkMembership(ledgerId, userId);
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("No account with such id"));
+                .orElseThrow(() -> new BadRequestException("No account with such id"));
         if (!account.getLedger().getId().equals(ledgerId))
             throw new AccessDeniedException("This account doesn't belong to this ledger");
-        membershipService.getById(ledgerId, userId);
-        return mapper.toResponseDto(account);
+        return account;
     }
 
     @Transactional(readOnly = true)
-    public Account getReferenceById(UUID accountId){
-        if (accountRepository.existsById(accountId))
-            return accountRepository.getReferenceById(accountId);
-        else throw new ResourceNotFoundException("No account with such id");
-    }
-
-    @Transactional(readOnly = true)
-    public List<AccountResponseDto> getAll(UUID userId, UUID ledgerId){
-        LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);
-
-        if (membershipResponseDto.status() != MemberStatus.ACTIVE)
-            throw new InvalidStateException("Only active members can view ledger accounts");
+    public List<AccountResponseDto> getAll(UUID ledgerId, UUID userId){
+        checkMembership(ledgerId, userId);
 
         return accountRepository.findAllByLedgerId(ledgerId)
                 .stream().map(mapper::toResponseDto).toList();
     }
 
     @Transactional
-    public AccountResponseDto create(UUID userId, UUID ledgerId, AccountCreateDto createDto){
-        checkPermissions(ledgerId, userId);
+    public AccountResponseDto create(UUID ledgerId, UUID userId, AccountCreateDto createDto){
+        checkIsAdminOrOwner(ledgerId, userId);
 
-        LedgerMembership membershipReference = membershipService.getReferenceById(ledgerId, userId);
+        LedgerMembership membershipReference = membershipService.validateAndGetById(ledgerId, userId);
 
         Account savedAccount = accountRepository.saveAndFlush(
                 mapper.toEntity(createDto, membershipReference.getLedger())
@@ -90,14 +85,9 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponseDto edit(UUID userId, UUID ledgerId, UUID accountId, AccountEditDto editDto){
-        checkPermissions(ledgerId, userId);
-
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("No account with such id"));
-        if (!account.getLedger().getId().equals(ledgerId))
-            throw new AccessDeniedException("This account doesn't belong to this ledger");
-
+    public AccountResponseDto edit(UUID ledgerId, UUID userId, UUID accountId, AccountEditDto editDto){
+        checkIsAdminOrOwner(ledgerId, userId);
+        Account account = validateAndGet(ledgerId, userId, accountId);
         mapper.updateFromDto(editDto, account);
 
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
@@ -111,16 +101,10 @@ public class AccountService {
     }
 
     @Transactional
-    public void delete(UUID userId, UUID ledgerId, UUID accountId){
+    public void delete(UUID ledgerId, UUID userId, UUID accountId){
+        checkIsAdminOrOwner(ledgerId, userId);
 
-        checkPermissions(ledgerId, userId);
-
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("No account with such id"));
-        if (!account.getLedger().getId().equals(ledgerId))
-            throw new AccessDeniedException(
-                    "This account doesn't belong to this ledger");
-
+        Account account = validateAndGet(ledgerId, userId, accountId);
         accountRepository.delete(account);
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
                 ledgerId,
@@ -133,32 +117,30 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public AccountResponseDto getLedgerAccount(UUID ledgerId, UUID userId){
-        System.out.println("USER ID MEMBERSHIP        ");
-        System.out.print(userId.toString());
-        System.out.println("LEDGER ID MEMBERSHIP        ");
-        System.out.print(ledgerId.toString());
-
-        membershipService.getReferenceById(ledgerId, userId);
+        membershipService.validateAndGetById(ledgerId, userId);
         Account account = accountRepository.findByLedgerId(ledgerId)
-                .orElseThrow(() -> new ResourceNotFoundException("This ledger doesn't have an account or it wasn't found"));
+                .orElseThrow(() -> new BadRequestException("This ledger doesn't have an account or it wasn't found"));
 
         return mapper.toResponseDto(account);
     }
 
     @Transactional(readOnly = true)
-    public boolean existsByLedger(UUID userId, UUID ledgerId){
-        membershipService.getReferenceById(ledgerId, userId);
+    public boolean existsByLedger(UUID ledgerId, UUID userId){
+        membershipService.validateAndGetById(ledgerId, userId);
         return accountRepository.existsByLedgerId(ledgerId);
     }
 
-
-    private void checkPermissions(UUID ledgerId, UUID userId){
-        LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);
-
-        if (membershipResponseDto.accessType() != AccessType.ADMIN && membershipResponseDto.accessType() != AccessType.OWNER)
-            throw new InsufficientPermissionsException("Only admins and owners can perform this action");
-
+    public LedgerMembershipResponseDto checkMembership(UUID ledgerId, UUID userId){
+        LedgerMembershipResponseDto membershipResponseDto = membershipService.findById(ledgerId, userId);
         if (membershipResponseDto.status() != MemberStatus.ACTIVE)
             throw new InvalidStateException("Only active members can perform this action");
+        return membershipResponseDto;
+    }
+
+
+    private void checkIsAdminOrOwner(UUID ledgerId, UUID userId){
+        LedgerMembershipResponseDto membershipResponseDto = checkMembership(ledgerId, userId);
+        if (membershipResponseDto.accessType() != AccessType.ADMIN && membershipResponseDto.accessType() != AccessType.OWNER)
+            throw new InsufficientPermissionsException("Only admins and owners can perform this action");
     }
 }

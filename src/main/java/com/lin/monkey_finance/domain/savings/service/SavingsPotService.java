@@ -1,17 +1,12 @@
 package com.lin.monkey_finance.domain.savings.service;
 
-import com.lin.monkey_finance.common.exception.AccountStatusException;
-import com.lin.monkey_finance.common.exception.InsufficientPermissionsException;
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.common.exception.BadRequestException;
 import com.lin.monkey_finance.domain.account.dto.AccountResponseDto;
 import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.account.service.AccountService;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerMembershipResponseDto;
 import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
-import com.lin.monkey_finance.domain.ledger.model.AccessType;
 import com.lin.monkey_finance.domain.ledger.model.Ledger;
 import com.lin.monkey_finance.domain.ledger.model.LedgerActionType;
-import com.lin.monkey_finance.domain.ledger.model.MemberStatus;
 import com.lin.monkey_finance.domain.ledger.service.LedgerMembershipService;
 import com.lin.monkey_finance.domain.savings.dto.SavingsPotCreateDto;
 import com.lin.monkey_finance.domain.savings.dto.SavingsPotResponseDto;
@@ -20,6 +15,7 @@ import com.lin.monkey_finance.domain.savings.mapper.SavingsPotMapper;
 import com.lin.monkey_finance.domain.savings.model.SavingsPot;
 import com.lin.monkey_finance.domain.savings.repository.SavingsPotRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,20 +25,20 @@ import java.util.UUID;
 @Service
 public class SavingsPotService {
 
-    private final SavingsPotRepository savingsPotRepository;
+    private final SavingsPotRepository repository;
     private final SavingsPotMapper mapper;
     private final LedgerMembershipService membershipService;
     private final ApplicationEventPublisher eventPublisher;
     private final AccountService accountService;
 
     public SavingsPotService(
-            SavingsPotRepository savingsPotRepository,
+            SavingsPotRepository repository,
             SavingsPotMapper mapper,
             LedgerMembershipService membershipService,
             ApplicationEventPublisher eventPublisher,
             AccountService accountService
     ){
-        this.savingsPotRepository = savingsPotRepository;
+        this.repository = repository;
         this.mapper = mapper;
         this.membershipService = membershipService;
         this.eventPublisher = eventPublisher;
@@ -50,31 +46,31 @@ public class SavingsPotService {
     }
 
     @Transactional(readOnly = true)
-    public SavingsPotResponseDto getById(UUID userId, UUID ledgerId, UUID savingsPotId){
-        checkMembership(ledgerId, userId);
-        SavingsPot savingsPot = savingsPotRepository.findById(savingsPotId)
-                .orElseThrow(() -> new ResourceNotFoundException("No savings pot with such id"));
-        return mapper.toResponseDto(savingsPot);
+    @PreAuthorize("@ledgerSecurity.isActiveMember(#ledgerId, #userId)")
+    public SavingsPotResponseDto getById(UUID ledgerId, UUID userId, UUID savingsPotId){
+        return mapper.toResponseDto(validateAndGet(userId, ledgerId, savingsPotId));
     }
 
     @Transactional(readOnly = true)
-    public SavingsPot getReferenceById(UUID savingsPotId){
-        if (savingsPotRepository.existsById(savingsPotId))
-            return savingsPotRepository.getReferenceById(savingsPotId);
-        else throw new ResourceNotFoundException("No savings pot with such id");
+    public SavingsPot validateAndGet(UUID ledgerId, UUID userId, UUID savingsPotId){
+        SavingsPot savingsPot = repository.findById(savingsPotId)
+                .orElseThrow(() -> new BadRequestException("No savings pot with such id"));
+
+        if (!savingsPot.getLedger().getId().equals(ledgerId))
+            throw new BadRequestException("This savings pot doesn't belong to this ledger");
+        return savingsPot;
     }
 
     @Transactional(readOnly = true)
-    public List<SavingsPotResponseDto> getAll(UUID userId, UUID ledgerId){
-        checkMembership(ledgerId, userId);
-        return savingsPotRepository.findAllByLedgerId(ledgerId).stream().map(mapper::toResponseDto).toList();
+    @PreAuthorize("@ledgerSecurity.isActiveMember(#ledgerId, #userId)")
+    public List<SavingsPotResponseDto> getAll(UUID ledgerId, UUID userId){
+        return repository.findAllByLedgerId(ledgerId).stream().map(mapper::toResponseDto).toList();
     }
 
     @Transactional
-    public SavingsPotResponseDto create(UUID userId, UUID ledgerId, SavingsPotCreateDto createDto){
-        checkIsAdminOrOwner(ledgerId, userId);
-
-        boolean accountExists = accountService.existsByLedger(userId, ledgerId);
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public SavingsPotResponseDto create(UUID ledgerId, UUID userId, SavingsPotCreateDto createDto){
+        boolean accountExists = accountService.existsByLedger(ledgerId, userId);
         Currency currency;
 
         if (createDto.currency() != null)
@@ -87,7 +83,7 @@ public class SavingsPotService {
             else currency = Currency.EUR;
         }
 
-        Ledger ledger = membershipService.getReferenceById(ledgerId, userId).getLedger();
+        Ledger ledger = membershipService.validateAndGetById(ledgerId, userId).getLedger();
 
         SavingsPot savingsPot = new SavingsPot(
                 createDto.name(),
@@ -99,7 +95,7 @@ public class SavingsPotService {
                 ledger
         );
 
-        SavingsPot savedSavingsPot = savingsPotRepository.saveAndFlush(savingsPot);
+        SavingsPot savedSavingsPot = repository.saveAndFlush(savingsPot);
 
         eventPublisher.publishEvent(
                 new LedgerActivityLogEvent(
@@ -110,37 +106,19 @@ public class SavingsPotService {
     }
 
     @Transactional
-    public SavingsPotResponseDto edit(UUID userId, UUID ledgerId, UUID savingsPotId, SavingsPotUpdateDto updateDto){
-        checkIsAdminOrOwner(ledgerId, userId);
-
-        if (!savingsPotRepository.existsById(savingsPotId))
-            throw new ResourceNotFoundException("No savings pot with such id");
-        SavingsPot savingsPot = savingsPotRepository.getReferenceById(savingsPotId);
-
-        Ledger ledger = membershipService.getReferenceById(ledgerId, userId).getLedger();
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public SavingsPotResponseDto edit(UUID ledgerId, UUID userId, UUID savingsPotId, SavingsPotUpdateDto updateDto){
+        SavingsPot savingsPot = validateAndGet(ledgerId, userId, savingsPotId);
+        Ledger ledger = membershipService.validateAndGetById(ledgerId, userId).getLedger();
         mapper.updateFromDto(savingsPot, updateDto, ledger);
         return mapper.toResponseDto(savingsPot);
     }
 
     @Transactional
-    public void delete(UUID userId, UUID ledgerId, UUID savingsPotId){
-        checkIsAdminOrOwner(ledgerId, userId);
-
-        if (!savingsPotRepository.existsById(savingsPotId))
-            throw new ResourceNotFoundException("No savings pot with such id");
-        savingsPotRepository.deleteById(savingsPotId);
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #userId)")
+    public void delete(UUID ledgerId, UUID userId, UUID savingsPotId){
+        validateAndGet(ledgerId, userId, savingsPotId);
+        repository.deleteById(savingsPotId);
     }
 
-    private LedgerMembershipResponseDto checkMembership(UUID ledgerId, UUID userId){
-        LedgerMembershipResponseDto membershipResponseDto = membershipService.getById(ledgerId, userId);
-        if (membershipResponseDto.status() != MemberStatus.ACTIVE)
-            throw new AccountStatusException("Only active users can perform this action");
-        return membershipResponseDto;
-    }
-
-    private void checkIsAdminOrOwner(UUID ledgerId, UUID userId){
-        LedgerMembershipResponseDto membershipResponseDto = checkMembership(ledgerId, userId);
-        if (membershipResponseDto.accessType() != AccessType.ADMIN && membershipResponseDto.accessType() != AccessType.OWNER)
-            throw new InsufficientPermissionsException("Only admins or owners of this ledger can perform this action");
-    }
 }

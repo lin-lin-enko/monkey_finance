@@ -40,7 +40,7 @@ public class Account {
     private Currency currency;
 
     @Size(min = 2, max = 255, message = "Description must be 2 to 255 characters long")
-    @Column(length = 255)
+    @Column()
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

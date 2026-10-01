@@ -2,8 +2,6 @@ package com.lin.monkey_finance.domain.account.dto;
 
 import com.lin.monkey_finance.domain.account.model.AccountType;
 import com.lin.monkey_finance.domain.account.model.Currency;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;

@@ -1,13 +1,9 @@
 package com.lin.monkey_finance.domain.ledger.dto;
 
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
-
-public record LedgerRequestDto(
+public record LedgerCreateDto(
         @NotBlank
         @Size(min = 3, max = 25, message = "The name of the ledger must be 3 to 25 characters long")
         String name,

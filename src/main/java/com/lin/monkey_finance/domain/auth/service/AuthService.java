@@ -2,13 +2,13 @@ package com.lin.monkey_finance.domain.auth.service;
 import com.lin.monkey_finance.common.exception.AccountStatusException;
 import com.lin.monkey_finance.common.exception.InvalidTokenException;
 import com.lin.monkey_finance.common.exception.ResourceAlreadyExistsException;
-import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
+import com.lin.monkey_finance.common.exception.BadRequestException;
 import com.lin.monkey_finance.domain.account.dto.AccountCreateDto;
 import com.lin.monkey_finance.domain.account.model.AccountType;
 import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.account.service.AccountService;
 import com.lin.monkey_finance.domain.ledger.dto.LedgerDetailedResponseDto;
-import com.lin.monkey_finance.domain.ledger.dto.LedgerRequestDto;
+import com.lin.monkey_finance.domain.ledger.dto.LedgerCreateDto;
 import com.lin.monkey_finance.domain.ledger.service.LedgerService;
 import com.lin.monkey_finance.domain.user.dto.AuthResponseDto;
 import com.lin.monkey_finance.domain.user.dto.UserLoginDto;
@@ -88,11 +88,11 @@ public class AuthService {
 
         User savedUser = userRepository.saveAndFlush(user);
 
-        LedgerRequestDto ledgerRequestDto = new LedgerRequestDto(
+        LedgerCreateDto ledgerCreateDto = new LedgerCreateDto(
                 "My ledger",
                 "This is your first ledger. You can change it, set another ledger as default or make other changes, which will make its usage comfortable and personalized to you"
         );
-        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(ledgerRequestDto, savedUser.getId());
+        LedgerDetailedResponseDto ledgerDetailedResponseDto = ledgerService.create(savedUser.getId(), ledgerCreateDto);
 
         AccountCreateDto createDto = new AccountCreateDto(
                 "Default account",
@@ -102,7 +102,7 @@ public class AuthService {
                 Currency.EUR,
                 "Your default account. You can make changes if you want to customize it further"
         );
-        accountService.create(savedUser.getId(), ledgerDetailedResponseDto.id(), createDto);
+        accountService.create(ledgerDetailedResponseDto.id(), savedUser.getId(), createDto);
 
         String token = generateEmailConfirmationToken(savedUser.getId());
         emailService.sendConfirmationEmail(savedUser.getEmail(), token);
@@ -139,7 +139,7 @@ public class AuthService {
         UUID userId = UUID.fromString(jwt.getSubject());
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
