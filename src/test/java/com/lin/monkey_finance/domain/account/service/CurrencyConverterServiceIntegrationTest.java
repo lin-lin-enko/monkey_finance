@@ -1,22 +1,16 @@
 package com.lin.monkey_finance.domain.account.service;
 
+import com.lin.monkey_finance.BaseIntegrationTest;
 import com.lin.monkey_finance.domain.account.dto.CurrencyExchangeResponseDto;
 import com.lin.monkey_finance.domain.account.model.Currency;
 import com.lin.monkey_finance.domain.transaction.service.CurrencyConverterService;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.client.MockRestServiceServer;
-import com.lin.monkey_finance.TestcontainersConfiguration;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,12 +23,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@ActiveProfiles("test")
-// tells spring to up the whole app for a test
-@SpringBootTest
-// starts real docker containers before testing
-@Import(TestcontainersConfiguration.class)
-public class CurrencyConverterServiceIntegrationTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class CurrencyConverterServiceIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private CurrencyConverterService converterService;
@@ -56,16 +46,24 @@ public class CurrencyConverterServiceIntegrationTest {
     @Value("${currency.api.key:test_api_key}")
     private String apiKey;
 
-    @Autowired
-    RedisConnectionFactory redisConnectionFactory;
+    @BeforeAll
+    void setUpMockServer(){
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+    }
 
     // before each test
     @BeforeEach
     void setUp(){
         // binding the interceptor to the builder. So all http requests
         // inside CurrencyConverterService will be intercepted by the mock server
-        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
-        redisConnectionFactory.getConnection().serverCommands().flushDb();
+        mockServer.reset();
+
+        var cache = cacheManager.getCache("exchangeRates");
+        assertThat(cache).isNotNull();
+
+        cache.evictIfPresent("UAH");
+
+        assertThat(cache.get("UAH")).as("Cache must be empty before each test").isNull();
     }
 
     @Test
@@ -88,13 +86,14 @@ public class CurrencyConverterServiceIntegrationTest {
                 .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
 
         CurrencyExchangeResponseDto responseDto = converterService.getLatestRates(Currency.UAH);
-        System.out.println("RESPONSE DTO      ");
-        System.out.println(responseDto.toString());
+
+
+        // var instead of org.springframework.cache.Cache
+        // improves readability but the variable is still strictly typed
+        var cache = cacheManager.getCache("exchangeRates");
+        assertThat(cache).isNotNull();
 
         Map<String, BigDecimal> rates = responseDto.conversionRates();
-        System.out.println("RATES    ");
-        System.out.println(rates.toString());
-
         // checking if the response (dto) is correct
         // never use if for tests!! cause it won't do anything
         // assertThat will not only check, but also fail the test if needed
@@ -105,28 +104,19 @@ public class CurrencyConverterServiceIntegrationTest {
                 .containsEntry("EUR", new BigDecimal("0.01925"))
                 .containsEntry("CNY", new BigDecimal("0.1506"));
 
-        // checking if the http request was done
-        mockServer.verify();
-
-        // var instead of org.springframework.cache.Cache
-        // improves readability but the variable is still strictly typed
-        var cache = cacheManager.getCache("exchangeRates");
-        assertThat(cache).isNotNull();
-
         CurrencyExchangeResponseDto cachedDto = cache.get("UAH", CurrencyExchangeResponseDto.class);
         assertThat(cachedDto).isNotNull();
 
-        // java forgets generics in runtime, so this warning is suppressed
-        @SuppressWarnings("unchecked")
         Map<String, BigDecimal> cachedRates = cachedDto.conversionRates(); // Map.class automatically casts cachedRates into a Map<,>
         assertThat(cachedRates).isNotNull();
-        System.out.println("CACHED RATES   ");
-        System.out.println(cachedRates.toString());
         assertThat(cachedRates)
                 .hasSize(3)
                 .containsEntry("USD", new BigDecimal("0.02240"))
                 .containsEntry("EUR", new BigDecimal("0.01925"))
                 .containsEntry("CNY", new BigDecimal("0.1506"));
+
+        // checking if the http request was done
+        mockServer.verify();
     }
 
     @Test
@@ -149,6 +139,9 @@ public class CurrencyConverterServiceIntegrationTest {
 
         // putting rates for UAH into cache to check if the request will be made
         cache.put("UAH", expectedDto);
+        System.out.println("Cache name: " + cache.getName());
+        System.out.println("Cache type: " + cache.getClass().getName());
+        System.out.println("Cached value: " + cache.get("UAH"));
 
         // test will fail if the service makes a request, cause it wasn't written here
         CurrencyExchangeResponseDto responseDto = converterService.getLatestRates(Currency.UAH);

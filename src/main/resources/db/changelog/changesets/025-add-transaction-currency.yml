@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-add-transaction-currency
+      author: alina
+      changes:
+        - addColumn:
+            schemaName: dev
+            tableName: transactions
+            columns:
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  constraints:
+                    nullable: false

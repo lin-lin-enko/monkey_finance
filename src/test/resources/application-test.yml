@@ -23,6 +23,9 @@ spring:
     properties:
       hibernate:
         default_schema: dev
+        format_sql: true
+    show-sql: true
+
   cloud:
     vault:
       enabled: false
@@ -36,3 +39,5 @@ logging:
   level:
     liquibase: DEBUG
     org.springframework.test.context: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

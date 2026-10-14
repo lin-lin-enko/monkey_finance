@@ -34,7 +34,7 @@ public class SavingsPot {
     @Column(nullable = false, length = 3)
     private Currency currency = Currency.EUR;
 
-    @Column(name = "target_sum", nullable = false)
+    @Column(name = "target_amount", nullable = false)
     private BigDecimal targetAmount;
 
     @Column(name = "due_date")

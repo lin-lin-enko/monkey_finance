@@ -92,7 +92,7 @@ public class TransactionService {
         transaction.setCategory(categoryValidationObject.category());
         transaction.setSubcategory(categoryValidationObject.subcategory());
         transaction.setLedger(membershipService.validateAndGetById(ledgerId, userId).getLedger());
-        transaction.setAccount(resolveAccount(transaction.getLedger().getId(), userId, createDto.accountId()));
+        transaction.setAccount(resolveAccount(transaction.getLedger().getId(), userId));
         transaction.setSavingsPot(resolveSavingsPot(transaction.getLedger().getId(), userId, createDto.savingsPotId()));
 
         if (createDto.currency() != null)
@@ -143,12 +143,10 @@ public class TransactionService {
         repository.delete(transaction);
     }
 
-    private Account resolveAccount(UUID ledgerId, UUID userId, UUID accountId){
-        if (accountId == null && accountService.existsByLedger(ledgerId, userId)){
+    private Account resolveAccount(UUID ledgerId, UUID userId){
+        if (accountService.existsByLedger(ledgerId, userId)) {
             AccountResponseDto accountResponseDto = accountService.getLedgerAccount(ledgerId, userId);
             return entityManager.getReference(Account.class, accountResponseDto.id());
-        } else if (accountId != null) {
-            return accountService.validateAndGet(ledgerId, userId, accountId);
         }
         else return null;
     }

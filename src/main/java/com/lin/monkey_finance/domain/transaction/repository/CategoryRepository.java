@@ -8,12 +8,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findAllByLedgerId(UUID ledgerId);
     List<Category> findAllByIsSystemTrue();
+    Optional<Category> findByNameAndIsSystemTrue(String name);
 
     @Query("""
         SELECT new com.lin.monkey_finance.domain.transaction.dto.CategoryWithSettingsDto(cat, cat_set)

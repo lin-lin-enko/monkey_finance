@@ -33,9 +33,5 @@ public record TransactionCreateDto(
 
         UUID subcategoryId,
 
-        UUID ledgerId,
-
-        UUID accountId,
-
         UUID savingsPotId
 ) {}

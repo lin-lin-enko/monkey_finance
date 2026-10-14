@@ -1,6 +1,7 @@
 package com.lin.monkey_finance.domain.transaction.service;
 
 import com.lin.monkey_finance.common.exception.BadRequestException;
+import com.lin.monkey_finance.common.exception.ResourceNotFoundException;
 import com.lin.monkey_finance.domain.account.dto.CategoryValidationObject;
 import com.lin.monkey_finance.domain.ledger.event.LedgerActivityLogEvent;
 import com.lin.monkey_finance.domain.ledger.model.*;
@@ -74,6 +75,13 @@ public class CategoryService {
         }
 
         return new CategoryValidationObject(category, null);
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryResponseDto getSystemByName(String name){
+        return repository.findByNameAndIsSystemTrue(name)
+                .map(categoryMapper::toResponseDto)
+                .orElseThrow(() -> new ResourceNotFoundException("No system category named \"" + name + "\""));
     }
 
     @Transactional(readOnly = true)
