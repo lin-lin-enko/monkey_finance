@@ -174,9 +174,30 @@ public class LedgerMembershipService {
     }
 
     @Transactional
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #targetUserId)")
+    public void revokeInvitation(UUID ledgerId, UUID authorizedUserId, UUID targetUserId){
+        LedgerMembership targetUserMembership = checkAndGetMembershipEntity(ledgerId, targetUserId);
+
+        if (targetUserMembership.getStatus() != MemberStatus.PENDING){
+            throw new InvalidStateException("Can't revoke an invitation, the user's status is " + targetUserMembership.getStatus());
+        }
+
+        repository.delete(targetUserMembership);
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
+                ledgerId,
+                authorizedUserId,
+                targetUserId,
+                LedgerActionType.MEMBER_INVITATION_REVOKED,
+                "User's invitation was revoked"
+        ));
+    }
+
+    @Transactional
     @PreAuthorize("@ledgerSecurity.isActiveMember(#ledgerId, #targetUserId)")
     public void leaveLedger(UUID ledgerId, UUID userId){
         LedgerMembership membership = checkAndGetMembershipEntity(ledgerId, userId);
+        if (membership.getStatus() != MemberStatus.ACTIVE)
+            throw new BadRequestException("Can't leave ledger with status " + membership.getStatus());
         membership.leaveLedger();
 
         eventPublisher.publishEvent(new LedgerActivityLogEvent(
@@ -235,6 +256,8 @@ public class LedgerMembershipService {
 
         if (targetUserMembership.getAccessType() == targetAccessType)
             throw new InvalidStateException("User already has " + targetAccessType.toString() + " access type");
+        if (targetAccessType == AccessType.OWNER)
+            throw new InvalidStateException("Ownership can be reassigned only through an ownership transfer");
 
         AccessType oldAccessType = targetUserMembership.getAccessType();
         targetUserMembership.setAccessType(targetAccessType);
@@ -247,40 +270,6 @@ public class LedgerMembershipService {
                 "Member's access type was changed from " + oldAccessType + " to " + targetAccessType
         ));
         return mapper.toResponseDto(targetUserMembership);
-    }
-
-    @Transactional
-    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #targetUserId)")
-    public void revokeInvitation(UUID ledgerId, UUID authorizedUserId, UUID targetUserId){
-        LedgerMembership targetUserMembership = checkAndGetMembershipEntity(ledgerId, targetUserId);
-
-        if (targetUserMembership.getStatus() != MemberStatus.PENDING){
-            throw new InvalidStateException("Can't revoke an invitation, the user's status is " + targetUserMembership.getStatus());
-        }
-
-        repository.delete(targetUserMembership);
-        eventPublisher.publishEvent(new LedgerActivityLogEvent(
-                ledgerId,
-                authorizedUserId,
-                targetUserId,
-                LedgerActionType.MEMBER_INVITATION_REVOKED,
-                "User's invitation was revoked"
-        ));
-    }
-
-    @Transactional
-    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #authorizedUserId) and @ledgerSecurity.isActiveMember(#ledgerId, #targetUserId)")
-    public void deleteMember(UUID ledgerId, UUID authorizedUserId, UUID targetUserId){
-        LedgerMembership targetUserMembership = checkAndGetMembershipEntity(ledgerId, targetUserId);
-
-        targetUserMembership.deleteMember(entityManager.getReference(User.class, authorizedUserId));
-        eventPublisher.publishEvent(new LedgerActivityLogEvent(
-                ledgerId,
-                authorizedUserId,
-                targetUserId,
-                LedgerActionType.MEMBER_DELETED,
-                "Member was deleted from the ledger"
-        ));
     }
 
     @Transactional
@@ -303,6 +292,21 @@ public class LedgerMembershipService {
         ));
 
         return mapper.toResponseDto(targetUserMembership);
+    }
+
+    @Transactional
+    @PreAuthorize("@ledgerSecurity.isAdminOrOwner(#ledgerId, #authorizedUserId) and @ledgerSecurity.isActiveMember(#ledgerId, #targetUserId)")
+    public void deleteMember(UUID ledgerId, UUID authorizedUserId, UUID targetUserId){
+        LedgerMembership targetUserMembership = checkAndGetMembershipEntity(ledgerId, targetUserId);
+
+        targetUserMembership.deleteMember(entityManager.getReference(User.class, authorizedUserId));
+        eventPublisher.publishEvent(new LedgerActivityLogEvent(
+                ledgerId,
+                authorizedUserId,
+                targetUserId,
+                LedgerActionType.MEMBER_DELETED,
+                "Member was deleted from the ledger"
+        ));
     }
 
     @Transactional(readOnly = true)

@@ -18,6 +18,7 @@ import com.lin.monkey_finance.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -31,23 +32,24 @@ import java.util.UUID;
 @Import(TestcontainersConfiguration.class)
 public abstract class BaseIntegrationTest {
     @Autowired
-    UserRepository userRepository;
+    protected UserRepository userRepository;
     @Autowired
-    UserMapper userMapper;
-
+    protected UserMapper userMapper;
     @Autowired
-    LedgerService ledgerService;
+    protected LedgerService ledgerService;
     @Autowired
-    LedgerMembershipService membershipService;
+    protected LedgerMembershipService membershipService;
     @Autowired
-    AccountService accountService;
+    protected AccountService accountService;
+    @Autowired
+    protected PasswordEncoder passwordEncoder;
 
     protected UserResponseDto createUser(){
         String randomId = UUID.randomUUID().toString().substring(0, 5);
         User user = new User(
                 "testusername-" + randomId,
                 "testemail-" + randomId + "@mail.com",
-                "password",
+                passwordEncoder.encode("password"),
                 "Test Name",
                 LocalDate.of(1999, 4, 28),
                 UserStatus.ACTIVE
